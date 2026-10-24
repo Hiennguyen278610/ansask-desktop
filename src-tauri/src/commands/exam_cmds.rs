@@ -6,10 +6,13 @@ use serde::Deserialize;
 use tauri::State;
 
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ExamListReq {
     pub subject_id: String,
 }
+
 #[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct IdReq {
     pub id: String,
 }
