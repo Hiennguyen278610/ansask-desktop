@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
 import { quizStart, attemptSubmit, type QuizQuestionDto } from '@/lib/tauri/commands';
@@ -24,22 +24,23 @@ export function useQuiz(examId?: string) {
   const [checkedAnswers, setCheckedAnswers] = useState<Record<string, boolean>>({});
   const [failedQuestions, setFailedQuestions] = useState<Set<string>>(new Set());
 
+  // Lấy params 1 lần duy nhất để tránh infinite loop
+  const initParams = useMemo(() => {
+    return {
+      count: searchParams.get('count') ? parseInt(searchParams.get('count')!, 10) : undefined,
+      randomize: searchParams.get('randomize') !== 'false',
+      mode: (searchParams.get('mode') as 'normal' | 'stream') || 'normal',
+      ids: searchParams.get('ids') ? searchParams.get('ids')!.split(',') : undefined,
+    };
+  }, [searchParams]);
+
   useEffect(() => {
     if (!examId) return;
-    
-    const countStr = searchParams.get('count');
-    const randomizeStr = searchParams.get('randomize');
-    const modeStr = searchParams.get('mode') as 'normal' | 'stream' | null;
-    const idsStr = searchParams.get('ids'); // Dùng cho practice mode
+    setMode(initParams.mode);
 
-    const count = countStr ? parseInt(countStr, 10) : undefined;
-    const randomize = randomizeStr ? randomizeStr === 'true' : undefined;
-    const questionIds = idsStr ? idsStr.split(',') : undefined;
-    const includeAnswers = modeStr === 'stream';
+    const includeAnswers = initParams.mode === 'stream';
 
-    setMode(modeStr || 'normal');
-
-    quizStart(examId, count, randomize, questionIds, includeAnswers).then(res => {
+    quizStart(examId, initParams.count, initParams.randomize, initParams.ids, includeAnswers).then(res => {
       setQuestions(res.questions);
       setStartTime(Date.now());
       setIsLoading(false);
@@ -47,7 +48,7 @@ export function useQuiz(examId?: string) {
       showToast(`Lỗi bắt đầu làm bài: ${err.message}`);
       navigate(`/subjects`);
     });
-  }, [examId, navigate, showToast, searchParams]);
+  }, [examId, initParams, navigate, showToast]);
 
   useEffect(() => {
     if (isLoading) return;
@@ -56,7 +57,7 @@ export function useQuiz(examId?: string) {
   }, [isLoading, startTime]);
 
   const toggleAnswer = (qId: string, optId: string, isMulti: boolean) => {
-    if (mode === 'stream' && checkedAnswers[qId]) return; // Không cho đổi đáp án khi đã check đúng
+    if (mode === 'stream' && checkedAnswers[qId]) return; 
     setAnswers(prev => {
       const current = prev[qId] || [];
       if (isMulti) {
@@ -74,6 +75,7 @@ export function useQuiz(examId?: string) {
     const selected = answers[qId] || [];
     if (selected.length === 0) return showToast('Vui lòng chọn đáp án!');
     
+    // OptionDto trả về từ BE có trường isCorrect (camelCase)
     const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id).sort();
     const selIds = [...selected].sort();
     
@@ -97,19 +99,16 @@ export function useQuiz(examId?: string) {
     });
   };
 
-  const submit = useCallback(async (overrideQuestions?: QuizQuestionDto[], overrideAnswers?: Record<string, string[]>) => {
+  const submit = useCallback(async () => {
     if (!examId) return;
     setIsSubmitting(true);
     try {
-      const qsToSubmit = overrideQuestions || questions;
-      const ansToSubmit = overrideAnswers || answers;
-
       const req = {
         examId,
         startedAt: new Date(startTime).toISOString(),
-        answers: qsToSubmit.map((q, idx) => ({
+        answers: questions.map((q, idx) => ({
           questionId: q.id,
-          selectedOptionIds: ansToSubmit[q.id] || [],
+          selectedOptionIds: answers[q.id] || [],
           position: idx,
           optionOrder: q.optionOrder,
         }))

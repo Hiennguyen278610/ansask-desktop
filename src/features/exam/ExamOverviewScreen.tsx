@@ -47,7 +47,7 @@ export function ExamOverviewScreen() {
 
   return (
     // Bọc toàn bộ trong flex-col h-full
-    <div className="flex flex-col h-full animate-fade-in">
+    <div className="flex flex-col h-full min-h-0 animate-fade-in">
       {/* Header cố định */}
       <div className="neu-card rounded-[26px] p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5 shrink-0 mb-6">
         <div className="space-y-2">
