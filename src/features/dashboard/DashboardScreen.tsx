@@ -39,7 +39,7 @@ export function DashboardScreen() {
                 key={p.id}
                 onClick={() => setPeriod(p.id as "week" | "month" | "year")}
                 className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition-all ${
-                  period === p.id ? 'bg-ink-strong text-white shadow-sm' : 'text-slate-500 hover:text-ink-strong'
+                  period === p.id ? 'bg-ink-strong text-app shadow-sm' : 'text-slate-500 hover:text-ink-strong'
                 }`}
               >
                 {p.label}

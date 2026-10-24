@@ -33,7 +33,7 @@ export function useQuiz(examId?: string) {
       showToast(`Lỗi bắt đầu làm bài: ${err.message}`);
       navigate(`/subjects`);
     });
-  }, [examId, navigate, showToast]);
+  }, [examId, navigate, showToast, searchParams]);
 
   useEffect(() => {
     if (isLoading) return;

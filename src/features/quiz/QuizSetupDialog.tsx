@@ -49,12 +49,12 @@ export function QuizSetupDialog({ open, examId, maxQuestions, onClose, onStart }
           <div className="grid grid-cols-4 gap-2">
             {[25, 32, 40].map(num => (
               <button key={num} onClick={() => setCount(num)}
-                className={`py-2 rounded-xl text-xs font-bold transition-all ${count === num ? 'bg-ink-strong text-white shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
+                className={`py-2 rounded-xl text-xs font-bold transition-all ${count === num ? 'bg-ink-strong text-app shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
                 {num} câu
               </button>
             ))}
             <button onClick={() => setCount(maxQuestions)}
-              className={`py-2 rounded-xl text-xs font-bold transition-all ${count === maxQuestions ? 'bg-ink-strong text-white shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
+              className={`py-2 rounded-xl text-xs font-bold transition-all ${count === maxQuestions ? 'bg-ink-strong text-app shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
               Tất cả
             </button>
           </div>

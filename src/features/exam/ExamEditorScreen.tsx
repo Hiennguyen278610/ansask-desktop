@@ -90,7 +90,7 @@ export function ExamEditorScreen() {
                 <button key={f} onClick={() => ed.handleSwitchFormat(f as 'txt'|'json')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold uppercase transition-all ${
                     ed.format === f 
-                      ? 'bg-[#262b33] text-white dark:bg-white dark:text-[#262b33] shadow-md' 
+                      ? 'bg-ink-strong text-app shadow-md' 
                       : 'text-slate-500 hover:text-ink-strong'
                   }`}>
                   {f}
