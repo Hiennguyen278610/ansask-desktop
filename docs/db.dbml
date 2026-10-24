@@ -1,0 +1,516 @@
+Project ansask_desktop {
+  database_type: 'SQLite'
+
+  Note: '''
+    # ansask-desktop — Schema dữ liệu local (SQLite)
+
+    **Mục đích.** Lưu lâu dài toàn bộ vòng đời luyện thi của app desktop ansask-desktop:
+    Môn học (`subjects`) → Bộ đề (`exams`) → Câu hỏi (`questions`) → Lựa chọn
+    (`answer_options`), cùng Lịch sử làm bài (`attempts`) và bảng mở rộng
+    `attempt_answers`.
+
+    **Hợp đồng với `docs/domain-core.md` (940 dòng).** `[CẬP NHẬT đợt 3]`
+    - 6 thực thể lõi §4.2–§4.6 + §4.10 map 1–1 sang 5 bảng lõi `subjects`, `exams`,
+      `questions`, `answer_options`, `attempts` + bảng `app_settings` (AppSetting §4.10).
+    - `QuizSession` §4.7 chỉ-RAM KHÔNG có bảng; `AttemptAnswer` §4.8 ĐÃ CÓ bảng
+      `attempt_answers` CHÍNH THỨC (Q-03 CHỐT đợt 2 — xem lại chi tiết đáp án sau
+      khi đóng app), kèm `app_settings` (Q-13/Q-14, R2).
+    - State UI thuần túy §4.9 (`activeTab`, `sidebarOpen`, `examViewMode`,
+      `showAnswersSwitch`, `editorQuestions`, `parseError`, `toastMessage`,
+      `focusedQuestionId`, `quizUserAnswers`…) không lưu vào DB.
+    - Ràng buộc `BR-01..BR-81`, luồng `UC-01..UC-38`, giả định `AS-01..AS-12`, câu hỏi mở
+      `Q-01..Q-21` được tham chiếu ngay tại note của từng bảng/cột.
+    - `AS-01`: sản phẩm phải persist xuống SQLite local (ref-ui hiện là demo 100%
+      in-memory, BR-50). `AS-02`/`NFR-03`: single-user, không bảng users/auth.
+
+    **Đọc kèm:** phụ lục "Ánh xạ thực thể → bảng & điểm chưa chắc chắn" nằm ở Note của
+    bảng cuối file (`attempt_answers`) — DBML không hỗ trợ Note cấp root.
+
+    ---
+
+    ## QUY ƯỚC CHUNG — 6 quyết định nền
+
+    ### (a) Khóa chính: `text` (chuỗi id có tiền tố / UUIDv7 / ULID)
+
+    Chọn `text` cho mọi PK và FK, KHÔNG dùng `integer AUTOINCREMENT`.
+
+    1. Giữ nguyên id seed của ref-ui: `sub-1`..`sub-6` (ref-ui.tsx:L252-L289),
+       `exam-1`..`exam-4` (L291-L383), `q-net-1`, `opt-net-1-0`, `att-1`..`att-5`
+       (L385-L466) ⇒ migrate không phải ánh xạ lại id, không vỡ tham chiếu chéo trong
+       chính dữ liệu seed.
+    2. App sinh id dạng chuỗi có tiền tố ngay tại FE: `sub-${Date.now()}` (L1068),
+       `exam-${Date.now()}` (L1044), `att-${Date.now()}` (L1138), `q-{idx}-{rand}` (L918),
+       `opt-{ts}-{rand}` (L548) ⇒ cột `text` nhận thẳng, không cần lớp dịch id.
+    3. Id toàn cục, không phụ thuộc thứ tự insert ⇒ backup/export/seed lại và khả năng
+       đồng bộ nhiều thiết bị về sau không bị collide (Q-01, Q-03).
+    4. Id sinh bằng `Date.now()` (L1044/L1068/L1138) KHÔNG bảo đảm unique tuyệt đối (hai
+       lần lưu trong cùng 1 ms). Quy ước cho bản ghi MỚI: UUIDv7 hoặc ULID (26–36 ký tự) —
+       vẫn sort được theo thời gian, tránh collision. Id seed giữ nguyên văn.
+
+    **Đánh đổi:** text 36 byte lớn hơn integer 8 byte ⇒ PK/index tốn khoảng 2–4 lần dung
+    lượng, so sánh chuỗi chậm hơn so sánh số. Với DB local 1 người dùng, ước tính dưới
+    100k dòng (NFR-03, NFR-12), đánh đổi này không đáng kể; bù lại được (1)–(4).
+    Không chọn `integer` PK vì sẽ phải thêm cột `external_id` song song chỉ để giữ id
+    seed ⇒ phức tạp hơn mà không giải quyết được (3).
+
+    ### (b) Kiểu thời gian: `text` ISO-8601 theo UTC (không dùng unix epoch)
+
+    Mọi mốc thời gian lưu dạng chuỗi ISO-8601 UTC có mili-giây + hậu tố `Z`:
+    `YYYY-MM-DDTHH:MM:SS.sssZ` — đúng bằng output của JS `new Date().toISOString()` và
+    đúng bằng output của SQLite `strftime('%Y-%m-%dT%H:%M:%fZ','now')`.
+
+    Lý do: (i) khớp sẵn cách ref-ui sinh `createdAt` (BR-03 L1071, BR-10 L1030);
+    (ii) so sánh/sort lexicographic trên TEXT trùng khớp thứ tự thời gian vì cùng múi giờ
+    và cùng độ dài; (iii) đọc được bằng mắt khi debug SQLite; (iv) SQLite không có kiểu
+    datetime riêng. Đánh đổi: 24 byte/giá trị (so với 8 byte của epoch) và mọi phép so
+    sánh phải giữ đúng định dạng — quy ước bắt buộc LUÔN đủ mili-giây, không có biến thể
+    `YYYY-MM-DD`.
+
+    #### Xử lý lệch UTC vs local — Q-06 / AS-06 (ĐÃ CHỐT)
+
+    - `created_at` / `updated_at` của MỌI bảng: **UTC**, app set bằng `toISOString()`.
+      ref-ui cũng dùng UTC cho `Subject.createdAt` (L1071) và `Exam.createdAt` (L1030).
+    - `attempts.submitted_at`: **LƯU UTC** — một mốc tuyệt đối duy nhất. ref-ui hiện ghép
+      chuỗi theo giờ local (L1128-L1135 dùng `getFullYear/getMonth/getDate/getHours`), gây
+      mâu thuẫn AS-06. Cách chuẩn hóa: lúc nộp dựng `new Date(y, m, d, h, mi)` (local) rồi
+      lấy `.toISOString()`. Round-trip UTC → local cho lại đúng chuỗi giờ local cũ nên
+      **hành vi hiển thị của UI không đổi**, nhưng DB có mốc so sánh/sort được.
+    - Luật hiển thị theo từng cột (không đổi schema) — **ĐÃ CHỐT (đợt 2)**: MỌI hiển thị
+      cho người dùng theo múi giờ `Asia/Ho_Chi_Minh` (UTC+7, không DST); DB vẫn chỉ lưu
+      UTC theo quy ước trên. `exams.created_at` → render dạng `YYYY-MM-DD HH:mm` theo
+      `Asia/Ho_Chi_Minh` (cộng 7 giờ vào UTC, KHÔNG dùng `localtime` của máy) —
+      ref-ui.tsx:L2152 (card bộ đề); repository/FE đổi formatter, KHÔNG đổi schema.
+      `subjects.created_at` → **hạ tầng, UI KHÔNG hiển thị** ngày tạo môn ở bất kỳ màn
+      nào (chỉ dùng để sắp thứ tự lưới môn — BR-05). `attempts.submitted_at` → hiển thị
+      theo `Asia/Ho_Chi_Minh`; backend tính ranh giới kỳ/thống kê (theo ngày/tuần…)
+      cũng theo múi giờ `Asia/Ho_Chi_Minh`.
+    - Hệ quả: một nguồn UTC duy nhất trong DB, không lưu giờ local, không lưu offset;
+      toàn bộ lệch múi giờ nằm ở lớp hiển thị/thống kê.
+
+    ### (c) Soft delete: ÁP DỤNG cho `subjects` + `exams` (Q-01 — ĐÃ CHỐT)
+
+    Q-01 được duyệt (đảo hướng đề xuất cũ): `subjects` và `exams` có cột
+    `deleted_at text null` — xóa mềm = set `deleted_at` bằng mốc ISO-8601 UTC (quy ước b)
+    trong MỘT transaction, KHÔNG xóa dòng. `deleted_at IS NULL` nghĩa là bản ghi đang sống.
+
+    - `subjects` / `exams`: xóa mềm qua `deleted_at`. Xóa môn **cascade ẩn** mọi `exams`
+      của môn đó: trong cùng transaction, sau khi set `deleted_at` cho môn, chạy
+      `UPDATE exams SET deleted_at = <now ISO UTC> WHERE subject_id = ? AND deleted_at IS NULL`.
+    - Mọi truy vấn danh sách/thống kê bắt buộc kèm `WHERE deleted_at IS NULL` (lưới môn,
+      danh sách bộ đề, đếm số bộ đề/câu của môn, tìm kiếm, thống kê…).
+    - `questions` / `answer_options` / `attempts`: KHÔNG có cột `deleted_at` — bị ẩn
+      gián tiếp: chỉ xuất hiện khi join tới `exams`/`subjects` còn sống. `questions` và
+      `answer_options` vẫn hard delete trong transaction lưu bộ đề (BR-12); `attempts`
+      không bao giờ bị xóa (FK RESTRICT, BR-26 snapshot `exam_title`/`subject_name`).
+    - FK giữ nguyên như đã khai báo (mục "KHÓA NGOẠI"): soft delete không đụng tới FK,
+      dòng cha vẫn tồn tại nên lịch sử/báo cáo cũ không vỡ.
+    - Khôi phục = set lại `deleted_at = NULL` (UI: SCREEN-09/UC-34/UC-35, Q-21 **ĐÃ CHỐT** đợt 3);
+      xung đột tên xử lý theo BR-78 (đổi tên trước khi khôi phục).
+
+    ### (d) `created_at` + `updated_at`: có ở tất cả 6 bảng; `exams.updated_at` dùng thật (Q-02 ĐÃ CHỐT)
+
+    - `created_at text not null` — mốc tạo bản ghi, ISO-8601 UTC, default
+      `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))` để INSERT thiếu cột vẫn hợp lệ.
+    - `updated_at text not null` — mốc sửa gần nhất, cùng định dạng, default như trên.
+    - Cách cập nhật: SQLite KHÔNG có `ON UPDATE`, nên repository phải set
+      `updated_at = <now ISO UTC>` trong MỌI câu UPDATE (một helper chung ở lớp DB).
+      Tuỳ chọn hardening: trigger `AFTER UPDATE` set `NEW.updated_at`.
+    - Ý nghĩa nghiệp vụ: `exams.created_at` được card bộ đề render trực tiếp (L2152);
+      `subjects.created_at` KHÔNG hiển thị ở đâu, chỉ dùng để sắp thứ tự lưới môn (BR-05).
+      `exams.updated_at` — **Q-02 ĐÃ CHỐT (đợt 2): GIỮ và dùng thật**: mỗi lần lưu ghi
+      đè bộ đề (BR-12), repository set `updated_at = <now ISO UTC>`; cột vẫn KHÔNG hiển
+      thị ở UI (chỉ debug/đồng bộ/lịch sử). `subjects.updated_at` giữ vai trò hạ tầng —
+      mọi UPDATE phải set (quy ước này); xóa mềm (c) set `deleted_at`, không bắt buộc
+      đụng `updated_at`.
+    - Bảng bất biến (`attempts`, `attempt_answers`): `updated_at` luôn bằng `created_at`
+      sau insert (BR-27: Attempt không sửa/không xóa) — vẫn khai báo để tuân quy ước.
+    - KHÔNG dùng `updated_at` làm khóa sort hiển thị: thứ tự UI là thứ tự mảng (AS-07).
+
+    ### (e) Kiểu SQLite hợp lệ: chỉ `text | integer | real | blob`
+
+    Cấm `varchar`, `boolean`, `timestamp`, `uuid`, `jsonb`, `serial` — SQLite không có các
+    kiểu này; khai báo theo kiểu đó chỉ tạo affinity sai và làm migration lỗi.
+
+    | Nhu cầu | Kiểu dùng | Ràng buộc kèm theo |
+    |---|---|---|
+    | id, tên, chuỗi, màu hex, enum-like, mốc thời gian | `text` | `NOT NULL` khi bắt buộc |
+    | đếm, thứ tự, số giây, cờ đúng/sai | `integer` | `CHECK` biên + `CHECK (col IN (0,1))` cho cờ |
+    | điểm hệ 10 | `real` | `CHECK (score >= 0 AND score <= 10)` |
+    | ảnh/tệp nhị phân | `blob` — KHÔNG DÙNG | app không lưu ảnh/tệp (out-of-scope §1.4) |
+
+    - Cờ đúng/sai duy nhất trong schema: `answer_options.is_correct` và
+      `attempt_answers.is_correct` — đều là `integer` 0/1 kèm CHECK.
+    - Enum-like (nếu có) là `text` + CHECK. **SQLite không có ENUM** và file này khai báo
+      0 `Enum` DBML (xem phụ lục, mục Enum) để tránh sinh ra type không tồn tại.
+    - Lưu ý affinity: cột `text` lưu cả số dưới dạng chuỗi ⇒ không đặt `position`/`score`
+      vào cột text, nếu không `'10' < '9'` khi so sánh.
+
+    ### (f) FK enforcement: SQLite mặc định TẮT
+
+    Bắt buộc chạy `PRAGMA foreign_keys = ON;` trên **mỗi kết nối** — giá trị này không lưu
+    trong file DB và reset mỗi lần mở connection. Đặt ngay sau khi mở kết nối trong lớp DB
+    của `src-tauri` (rusqlite: `conn.execute_batch("PRAGMA foreign_keys = ON;")` hoặc
+    `pragma_update`). Nếu quên, toàn bộ `Ref` bên dưới chỉ còn là chú thích: không cascade,
+    không chặn orphan. Kiểm chứng nhanh: `PRAGMA foreign_keys;` phải trả `1`.
+
+    Kèm khuyến nghị: mỗi lần lưu bộ đề chạy trong MỘT transaction (BR-47 cho phép dữ liệu
+    bẩn, transaction tránh nửa bộ đề), và bật `PRAGMA journal_mode = WAL` cho app desktop.
+
+    ### (g) Quan hệ
+
+    **Không có bảng trung gian n-n**: Subject 1–N Exam 1–N Question 1–N AnswerOption;
+    Exam 1–N Attempt (kèm `subject_id` để thống kê theo môn); Attempt 1–N AttemptAnswer
+    (nếu bật bảng mở rộng). Mọi bảng đều có đúng MỘT khóa ngoại trỏ lên cha trực tiếp ⇒
+    không cần bảng nối.
+  '''
+}
+
+// ============================================================================
+// KHÓA NGOẠI — khai báo trước phần bảng để phụ lục ghi chú nằm cuối file.
+// Mọi FK đều có tên; cần PRAGMA foreign_keys = ON (quy ước f).
+// ============================================================================
+
+Ref fk_exams_subject: exams.subject_id > subjects.id [delete: restrict]
+Ref fk_questions_exam: questions.exam_id > exams.id [delete: cascade]
+Ref fk_answer_options_question: answer_options.question_id > questions.id [delete: cascade]
+Ref fk_attempts_exam: attempts.exam_id > exams.id [delete: restrict]
+Ref fk_attempts_subject: attempts.subject_id > subjects.id [delete: restrict]
+Ref fk_attempt_answers_attempt: attempt_answers.attempt_id > attempts.id [delete: cascade]
+Ref fk_attempt_answers_question: attempt_answers.question_id > questions.id [delete: set null]
+Ref fk_attempt_answers_option: attempt_answers.selected_option_id > answer_options.id [delete: set null]
+
+// ============================================================================
+// BẢNG LÕI — 5 thực thể domain-core §4.2..§4.6
+// ============================================================================
+
+Table subjects {
+  id         text [pk, note: 'Khóa chính dạng chuỗi. Seed `sub-1`..`sub-6` (ref-ui.tsx:L252-L289), tạo mới `sub-${Date.now()}` (L1068). Bản ghi mới dùng UUIDv7/ULID — xem quy ước (a).']
+  name       text [not null, note: 'Tên môn, đã trim ở tầng app (BR-01 L1063-L1069). Ràng buộc khuyến nghị: CHECK (length(trim(name)) > 0) — UI chặn tên rỗng trước khi ghi. UNIQUE toàn cục theo so khớp lower(trim(name)) — Q-15 ĐÃ CHỐT (đảo hướng BR-04 cũ cho phép trùng tên); thực thi bằng partial index SQLite vì DBML không diễn đạt expression + WHERE: CREATE UNIQUE INDEX uq_subjects_name_active ON subjects(lower(trim(name))) WHERE deleted_at IS NULL; — bản soft-deleted không chiếm tên nên tạo lại môn đã xóa mềm là được. Không giới hạn độ dài ở DB vì UI không cắt (L2020-L2026).']
+  color      text [not null, default: '#262b33', note: 'Màu nhận diện hex 6 ký tự, chọn từ 8 preset (BR-02 L147-L156: #262b33, #3b82f6, #10b981, #8b5cf6, #f59e0b, #f43f5e, #06b6d4, #6366f1). Mặc định #262b33 (L818). Ràng buộc khuyến nghị: CHECK (độ dài color = 7, ký tự đầu là dấu thăng, 6 ký tự còn lại thuộc 0-9a-f) — CỐ Ý KHÔNG CHECK danh sách 8 màu để không khóa bảng màu tương lai. Dùng cho avatar chữ cái, badge đếm câu, dot breadcrumb (BR-07).']
+  created_at text [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Ngày tạo môn, ISO-8601 UTC. Nguồn BR-03 (L1071): ref-ui lấy `toISOString().slice(0,10)` nên bản chất là ngày UTC. Hạ tầng: UI KHÔNG hiển thị ngày tạo môn ở bất kỳ màn nào (lưới môn chỉ render tên, màu, số bộ đề và số câu); giá trị chỉ dùng để sắp thứ tự lưới môn (BR-05). Nếu sau này có hiển thị, formatter đổi sang Asia/Ho_Chi_Minh UTC+7 (quy ước b — Q-06 ĐÃ CHỐT); schema vẫn lưu UTC.']
+  updated_at text [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc sửa gần nhất, ISO-8601 UTC. UI chưa có sửa môn nên thực tế luôn bằng created_at; repository vẫn phải set khi UPDATE (quy ước d).']
+  deleted_at text [null, note: 'XÓA MỀM (Q-01 ĐÃ CHỐT, quy ước c): null = đang sống; giá trị ISO-8601 UTC = thời điểm ẩn. Xóa môn set cột này và cascade ẩn mọi exams của môn trong MỘT transaction. Mọi truy vấn danh sách/thống kê WHERE deleted_at IS NULL; khôi phục = set lại NULL. [CẬP NHẬT đợt 3] Khi khôi phục (set deleted_at = NULL) nếu tên trùng với bản ghi đang sống → partial unique index uq_subjects_name_active báo conflict ⇒ phải đổi tên trước (BR-78).']
+  delete_batch_id text [null, note: '[CẬP NHẬT đợt 3 — Q-21] Id đợt xóa (UUID/ULID) sinh tại thời điểm xóa mềm. Subjects và exams bị xóa cùng đợt cascade share cùng delete_batch_id. Khôi phục môn chỉ khôi phục đúng những exams có cùng delete_batch_id (không khôi phục exams bị xóa riêng trước đó). null = chưa từng bị xóa mềm hoặc xóa mềm trước khi có cột này.']
+
+  indexes {
+    (created_at) [name: 'idx_subjects_created_at']
+    (deleted_at) [name: 'idx_subjects_deleted_at']
+    (delete_batch_id) [name: 'idx_subjects_delete_batch_id']
+  }
+
+  Note: '''Môn học — gốc của cây nội dung (domain-core §4.2).
+    UI: SCREEN-02 lưới môn (ref-ui.tsx:L2053-L2100), form tạo môn (L1976-L2049).
+    Vòng đời (ĐÃ CHỐT, đợt 2): TẠO + ĐỌC + SỬA (updatedAt) + XÓA MỀM (deleted_at,
+    Q-01) — không còn append-only; xóa mềm chỉ ẩn, không mất dữ liệu.
+    `name` UNIQUE toàn cục theo lower(trim(name)) — Q-15 ĐÃ CHỐT (đảo hướng BR-04);
+    thực thi bằng partial index, DBML không diễn đạt expression + WHERE nên ghi ở đây    và ở note cột `name`:
+    CREATE UNIQUE INDEX uq_subjects_name_active ON subjects(lower(trim(name)))
+    WHERE deleted_at IS NULL;
+    Số bộ đề và tổng số câu là dữ liệu DẪN XUẤT (L2055-L2059) — không lưu cột đếm.
+    Index `idx_subjects_created_at`: SCREEN-02 render lưới theo thứ tự mảng — môn cũ
+    trước, môn mới append cuối (BR-05 L1073, AS-07) ⇒ ORDER BY created_at ASC, id ASC.
+
+    [CẬP NHẬT đợt 3 — Q-21] Index thùng rác (SQLite):
+    - idx_subjects_deleted_at: truy vấn thùng rác `WHERE deleted_at IS NOT NULL` (theo loại môn).
+    - idx_subjects_delete_batch_id: nhóm khôi phục theo đợt xóa (`WHERE delete_batch_id = ?`).
+    SQL partial (DBML không diễn đạt WHERE nên ghi ở đây):
+    CREATE INDEX idx_subjects_deleted_at ON subjects(deleted_at) WHERE deleted_at IS NOT NULL;
+    CREATE INDEX idx_subjects_delete_batch_id ON subjects(delete_batch_id) WHERE deleted_at IS NOT NULL;
+
+    [CẬP NHẬT đợt 3 — PURGE VĨNH VIỄN MÔN (transaction steps)] Xóa vĩnh viễn môn chỉ chạy
+    trong transaction, thứ tự để tôn trọng FK RESTRICT trên attempts.exam_id/subject_id:
+    1) DELETE FROM attempt_answers WHERE attempt_id IN (SELECT id FROM attempts WHERE subject_id = ?);
+    2) DELETE FROM attempts WHERE subject_id = ?;
+    3) DELETE FROM answer_options WHERE question_id IN (SELECT id FROM questions WHERE exam_id IN (SELECT id FROM exams WHERE subject_id = ?));
+    4) DELETE FROM questions WHERE exam_id IN (SELECT id FROM exams WHERE subject_id = ?);
+    5) DELETE FROM exams WHERE subject_id = ?;
+    6) DELETE FROM subjects WHERE id = ?;
+    (Bước 3–4 cũng có thể dựa vào ON DELETE CASCADE của questions/exams, nhưng purge phải
+    xóa attempts trước vì FK RESTRICT; bước 3–4 chỉ là phòng hờ.) Hoặc purge bypass FK bằng
+    cách tắt `PRAGMA foreign_keys` trong transaction — KHÔNG khuyến nghị; giữ thứ tự trên.
+    Sau purge, attempts.exam_id snapshot đã mất ⇒ chỉ purge khi không còn lượt làm hoặc đã
+    chấp nhận mất lịch sử (BR-27).'''
+}
+
+Table exams {
+  id         text [pk, note: 'Khóa chính chuỗi. Seed `exam-1`..`exam-4` (ref-ui.tsx:L293), tạo mới `exam-${Date.now()}` (L1044).']
+  subject_id text [not null, note: 'FK → subjects.id. Môn chứa bộ đề, lấy từ `selectedSubjectId` khi lưu (L1045, L2132). NOT NULL + ON DELETE RESTRICT (Ref fk_exams_subject) — giữ nguyên: Q-01 chốt xóa MỀM (soft delete không đụng FK), hard delete môn vẫn bị chặn để không mất lịch sử; xóa môn ẩn mềm cả các bộ đề con. Không đổi được môn của bộ đề sau khi tạo (editor không cho chọn lại môn).']
+  title      text [not null, note: 'Tên bộ đề đã trim; rỗng → lưu nguyên văn chuỗi "Chưa có tiêu đề" (BR-09 L1029). Ràng buộc khuyến nghị: CHECK (length(trim(title)) > 0) — app luôn chuẩn hóa trước khi ghi. UNIQUE theo (subject_id, lower(trim(title))) — Q-15 ĐÃ CHỐT (đảo hướng cũ "trùng tên trong cùng môn được phép"); thực thi bằng partial index SQLite vì DBML không diễn đạt expression + WHERE: CREATE UNIQUE INDEX uq_exams_subject_title_active ON exams(subject_id, lower(trim(title))) WHERE deleted_at IS NULL; — khác môn vẫn trùng tên được; bản soft-deleted không chiếm tên.']
+  created_at text [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Thời điểm tạo, ISO-8601 UTC. Nguồn BR-10 (L1030): ref-ui cắt `toISOString().slice(0,16)` ⇒ bản chất UTC. GIỮ NGUYÊN khi cập nhật (L1032-L1039) — theo Q-02 ĐÃ CHỐT (đợt 2): mốc sửa dùng updated_at. Card bộ đề render dạng YYYY-MM-DD HH:mm theo Asia/Ho_Chi_Minh UTC+7 (Q-06 ĐÃ CHỐT: đổi formatter, schema giữ UTC) — ref-ui.tsx:L2152.']
+  updated_at text [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc sửa gần nhất. Q-02 ĐÃ CHỐT (đợt 2): GIỮ cột và DÙNG THẬT — mỗi lần lưu ghi đè bộ đề (BR-12, L1032-L1041 ghi đè title + questions) repository set updated_at = <now ISO UTC>, kể cả khi tạo mới. ref-ui cũ KHÔNG có updatedAt nên đây là cột bổ sung chủ động. Không hiển thị ở UI.']
+  deleted_at text [null, note: 'XÓA MỀM (Q-01 ĐÃ CHỐT, quy ước c): null = đang sống; giá trị ISO-8601 UTC = thời điểm ẩn. Xóa môn cascade ẩn cả exams con (cùng transaction). Mọi truy vấn danh sách/thống kê WHERE deleted_at IS NULL; khôi phục = set lại NULL; câu hỏi và bài làm liên quan bị ẩn gián tiếp qua join. [CẬP NHẬT đợt 3] Khôi phục set deleted_at = NULL; nếu (subject_id, lower(trim(title))) trùng bản ghi đang sống → partial unique index conflict ⇒ đổi tên trước (BR-78).']
+  delete_batch_id text [null, note: '[CẬP NHẬT đợt 3 — Q-21] Id đợt xóa chung với môn cha (cascade) hoặc id riêng khi xóa bộ đề lẻ. Dùng để khôi phục đúng phạm vi đợt xóa. null = chưa từng bị xóa mềm.']
+
+  indexes {
+    (subject_id) [name: 'idx_exams_subject_id']
+    (subject_id, created_at) [name: 'idx_exams_subject_created_at']
+    (deleted_at) [name: 'idx_exams_deleted_at']
+    (delete_batch_id) [name: 'idx_exams_delete_batch_id']
+    (subject_id, deleted_at) [name: 'idx_exams_subject_deleted_at']
+  }
+
+  Note: '''Bộ đề — tập câu hỏi thuộc một môn (domain-core §4.3).
+    UI: SCREEN-03 danh sách bộ đề (ref-ui.tsx:L2107-L2173), SCREEN-04 tổng quan
+    (L2179-L2324), SCREEN-05 editor (L2330-L2564). Seed `exam-1`..`exam-4` (L291-L383).
+    Số câu KHÔNG lưu: là dữ liệu dẫn xuất `questions.length` (BR-14) ⇒ `SELECT COUNT(*)`.
+    Không có cột `status`: vòng đời draft → saved → updated (§4.3) là trạng thái UI
+    (`viewMode`, `isEditingExistingExam`), không phải dữ liệu nghiệp vụ.
+    Lưu ý thứ tự: ref-ui PREPEND bộ đề mới (BR-11 L1050) nhưng tương đương
+    `ORDER BY created_at DESC`; tie-break bằng `id` khi hai bộ đề cùng mili-giây.
+    Index `idx_exams_subject_id`: BR-13 (L2131-L2133) — mọi truy vấn danh sách bộ đề đều
+    lọc WHERE subject_id = ?; index đơn phục vụ FK và phép đếm số bộ đề của môn.
+    Index `idx_exams_subject_created_at`: UC-05 + BR-11/BR-13 + AS-07 — danh sách bộ đề
+    trong một môn sắp theo created_at GIẢM DẦN, tránh bước sort riêng.
+    Unique (Q-15 ĐÃ CHỐT): trong một môn không có hai bộ đề còn sống trùng
+    lower(trim(title)); partial index (DBML không diễn đạt expression + WHERE, xem note
+    cột `title`):
+    CREATE UNIQUE INDEX uq_exams_subject_title_active ON exams(subject_id, lower(trim(title)))
+    WHERE deleted_at IS NULL;
+    Xóa mềm (Q-01 ĐÃ CHỐT): cột `deleted_at`; xóa môn ẩn kèm mọi bộ đề của môn; mọi
+    truy vấn lọc WHERE deleted_at IS NULL. `updated_at` dùng thật mỗi lần lưu bộ đề (Q-02).
+
+    [CẬP NHẬT đợt 3 — Q-21] Index thùng rác (SQLite):
+    - idx_exams_deleted_at: thùng rác theo loại bộ đề (`WHERE deleted_at IS NOT NULL`).
+    - idx_exams_delete_batch_id: nhóm khôi phục theo đợt xóa.
+    - idx_exams_subject_deleted_at: thùng rác của một môn (`WHERE subject_id = ? AND deleted_at IS NOT NULL`).
+    SQL partial (DBML không diễn đạt WHERE nên ghi ở đây):
+    CREATE INDEX idx_exams_deleted_at ON exams(deleted_at) WHERE deleted_at IS NOT NULL;
+    CREATE INDEX idx_exams_delete_batch_id ON exams(delete_batch_id) WHERE deleted_at IS NOT NULL;
+    CREATE INDEX idx_exams_subject_deleted_at ON exams(subject_id, deleted_at) WHERE deleted_at IS NOT NULL;
+
+    [CẬP NHẬT đợt 3 — partial unique index khi khôi phục] uq_exams_subject_title_active
+    (`WHERE deleted_at IS NULL`) vẫn đúng khi khôi phục: set deleted_at = NULL trên một bản
+    ghi đã xóa sẽ conflict nếu (subject_id, lower(trim(title))) trùng với bản ghi đang sống
+    ⇒ phải đổi tên trước (BR-78). Khôi phục môn chỉ khôi phục exams có cùng delete_batch_id.'''
+}
+
+Table questions {
+  id         text    [pk, note: 'Khóa chính chuỗi. Seed `q-*` (L240), sinh `q-{idx}-{rand}` khi parse (L918) và `q-{ts}-{rand}` khi chèn tay (L77). Bị sinh lại mỗi lần parse ⇒ không dùng làm định danh nghiệp vụ lâu dài.']
+  exam_id    text    [not null, note: 'FK → exams.id. Cha trực tiếp của câu hỏi; không tồn tại trong ref-ui vì câu hỏi được nhúng mảng (L2314-L2321). ON DELETE CASCADE (Ref fk_questions_exam): xóa bộ đề ⇒ xóa câu hỏi của nó (xóa bộ đề = SOFT DELETE — UC-27, Q-01 đợt 2; CASCADE hard-delete chỉ là phòng hờ dữ liệu mồ côi).']
+  ask        text    [not null, default: '', note: 'Nội dung câu hỏi. NOT NULL DEFAULT chuỗi rỗng vì BR-47 cho phép lưu câu rỗng và UC-07 cho phép xóa hết nội dung (UI hiện placeholder, L599-L606). Cố ý KHÔNG CHECK non-empty để khớp BR-47.']
+  position   integer [not null, note: 'Thứ tự 0-based trong bộ đề. Nguồn: index của mảng questions — UI hiển thị "Câu {index+1}" (L574-L575) và map theo idx (L2314). AS-07: thứ tự mảng là nghĩa nghiệp vụ ⇒ phải thành cột. Ràng buộc: UNIQUE (exam_id, position) + CHECK (position >= 0). Khi lưu bộ đề, app đánh lại position = 0..n-1 theo mảng editor.']
+  created_at text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc tạo dòng, ISO-8601 UTC — hạ tầng, UI không hiển thị. Với câu hỏi bị parse lại, giá trị này phản ánh lần ghi gần nhất chứ không phải lần soạn đầu tiên (do id bị sinh lại).']
+  updated_at text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc sửa gần nhất, ISO-8601 UTC — hạ tầng, UI không hiển thị. Repository set mỗi lần ghi (kể cả khi chỉ đổi position).']
+
+  indexes {
+    (exam_id, position) [unique, name: 'uq_questions_exam_position']
+  }
+
+  Note: '''Câu hỏi trắc nghiệm thuộc một bộ đề (domain-core §4.4).
+    Trong ref-ui, câu hỏi nằm NHÚNG trong `Exam.questions` (L1048) và **thứ tự mảng là
+    thứ tự hiển thị** (L2314, AS-07) ⇒ tách bảng + cột `position`.
+    Không lưu: đáp án đúng (nằm ở `answer_options.is_correct`), loại câu hỏi, độ khó,
+    tag, giải thích, ảnh — UI không có các khái niệm này (out-of-scope §1.4).
+    `ask` được phép RỖNG (BR-47, UC-07) nên chỉ NOT NULL DEFAULT chuỗi rỗng.
+    Luật "bộ đề phải có ≥ 1 câu" (BR-08) KHÔNG chặn được ở mức từng dòng — validate ở app
+    trong transaction lưu bộ đề.
+    `[CẬP NHẬT đợt 2]` BR-47 MỚI: khi lưu bộ đề, app validate MỖI câu phải có ≥ 2 lựa
+    chọn và ≥ 1 đáp án đúng (`is_correct = 1`); nhiều đáp án đúng là hợp lệ (chấm theo
+    tập — Q-10). Vẫn KHÔNG chặn được bằng CHECK trên từng dòng của SQLite ⇒ validate ở
+    tầng app.
+    `[GIẢ ĐỊNH]` `id` câu hỏi bị SINH LẠI mỗi lần parse JSON/TXT (L71-L88, L109-L118) ⇒
+    không ổn định qua các lần sửa; xem hệ quả ở bảng `attempt_answers`.
+    Index `uq_questions_exam_position`: đọc toàn bộ câu của một bộ đề theo đúng thứ tự
+    hiển thị (SCREEN-04 L2314-L2321, SCREEN-05). Dùng index ghép thay vì index đơn
+    (exam_id) vì mọi truy vấn đều ORDER BY position; index này cũng thỏa nhu cầu index
+    cho FK exam_id và chặn trùng vị trí.'''
+}
+
+Table answer_options {
+  id          text    [pk, note: 'Khóa chính chuỗi. Seed `o-*` (L309-L312), `opt-net-*` (L243), sinh mới `opt-{ts}-{rand}` (L548). Bị sinh lại mỗi lần parse (L71-L88).']
+  question_id text    [not null, note: 'FK → questions.id, ON DELETE CASCADE (Ref fk_answer_options_question). Cha trực tiếp — trong ref-ui là quan hệ nhúng `question.options` (L624).']
+  text        text    [not null, default: '', note: 'Nội dung lựa chọn. NOT NULL DEFAULT chuỗi rỗng: BR-47 cho phép text rỗng và UC-07 cho phép xóa hết (placeholder L726-L728). Không CHECK non-empty.']
+  is_correct  integer [not null, default: 0, note: 'Đáp án đúng: 0 = sai, 1 = đúng. Ràng buộc: CHECK (is_correct IN (0,1)). Nguồn: radio editor đặt DUY NHẤT một lựa chọn đúng (BR-46 L537-L544, UC-11), nhưng parse TXT/JSON có thể sinh 0 hoặc NHIỀU đáp án đúng và BR-47 cho phép lưu ⇒ DB KHÔNG đảm bảo được "đúng duy nhất 1/câu". SQLite chỉ có thể thêm partial unique index trên (question_id) WHERE is_correct = 1 để chặn nhiều hơn 1 — việc đó sẽ TỪ CHỐI dữ liệu mà BR-47/Q-10 cho phép, nên CỐ Ý KHÔNG khai báo; validate/normalize ở tầng app khi lưu và khi chấm điểm (BR-25).']
+  position    integer [not null, note: 'Thứ tự 0-based, quyết định nhãn A/B/C/D hiển thị (L700-L702 sinh nhãn từ index). Ràng buộc: UNIQUE (question_id, position) + CHECK (position >= 0). Đánh lại 0..n-1 khi lưu câu.']
+  created_at  text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc tạo dòng, ISO-8601 UTC — hạ tầng, UI không hiển thị.']
+  updated_at  text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc sửa gần nhất, ISO-8601 UTC — hạ tầng, UI không hiển thị. Repository set mỗi lần ghi.']
+
+  indexes {
+    (question_id, position) [unique, name: 'uq_answer_options_question_position']
+  }
+
+  Note: '''Lựa chọn trả lời của một câu hỏi (domain-core §4.5). Nhãn A/B/C/D sinh từ index
+    (L700-L702) ⇒ lưu `position`. Seed/parse sinh id `o-*` (L309-L312), `opt-net-*` (L243),
+    `opt-{ts}-{rand}` (L548).
+    Luật "tối thiểu 2 lựa chọn mỗi câu" là luật UI (L556, L744-L752) — KHÔNG chặn được
+    bằng CHECK trên từng dòng, phải validate ở app.
+    Luật "đúng duy nhất 1 đáp án mỗi câu" (BR-46 qua radio editor) cũng KHÔNG chặn được ở
+    DB — xem note cột `is_correct`.
+    `[CẬP NHẬT đợt 2]` BR-47 MỚI: app validate khi lưu — mỗi câu phải có ≥ 2 lựa chọn và
+    ≥ 1 đáp án đúng (`is_correct = 1`); 0 đáp án đúng là dữ liệu bất hợp lệ. Nhiều đáp án
+    đúng vẫn hợp lệ (chấm theo tập đáp án đã chọn — Q-10), nên CỐ Ý KHÔNG thêm partial
+    unique index `answer_options(question_id) WHERE is_correct = 1` — index đó sẽ TỪ CHỐI
+    dữ liệu hợp lệ.
+    Index `uq_answer_options_question_position`: đọc lựa chọn của một câu theo đúng thứ
+    tự A/B/C/D (QuestionCard L699-L702, L2314); cũng là index cho FK question_id và chặn
+    trùng vị trí trong cùng câu.'''
+}
+
+Table attempts {
+  id              text    [pk, note: 'Khóa chính chuỗi `att-${Date.now()}` (L1138); seed `att-1`..`att-5` (L387).']
+  exam_id         text    [not null, note: 'FK → exams.id (L1139). ON DELETE RESTRICT (Ref fk_attempts_exam): chỉ xóa mềm (UC-27) ⇒ RESTRICT không kích hoạt, lịch sử luôn giữ. Nếu sau này cho xóa, migration đổi cột sang NULL + ON DELETE SET NULL rồi hiển thị bằng exam_title snapshot.']
+  subject_id      text    [not null, note: 'FK → subjects.id (L1141), lưu trực tiếp để thống kê/lọc theo môn mà không phải join exams. Fallback `sub-1` khi thiếu subject (L1141). Hiện UI chỉ đọc subject_name (L1842) — giữ cột vì là một phần snapshot nghiệp vụ BR-26.']
+  exam_title      text    [not null, note: 'Snapshot tên bộ đề tại thời điểm nộp (BR-26 L1140). Cố ý trùng dữ liệu với exams.title — đánh đổi chấp nhận để lịch sử bất biến (Q-04).']
+  subject_name    text    [not null, note: 'Snapshot tên môn tại thời điểm nộp (L1142); fallback chuỗi "Môn học" khi không resolve được subject (L1143). Dùng để render cột môn trong bảng lịch sử dashboard (L1842).']
+  submitted_at    text    [not null, note: 'Mốc nộp bài, ISO-8601 UTC (chuẩn hóa từ giờ local của ref-ui L1128-L1135 — xem quy ước b). Tên cột khác `domain-core` §4.6 để tránh trùng tên một kiểu dữ liệu của SQL. THAY THẾ 4 cột period_tag/day_label/month_label/year_label: ref-ui chỉ GHI 4 nhãn này lúc tạo (L1144-L1147) và KHÔNG đọc ở bất kỳ đâu (grep toàn file không có usage khác) ⇒ dữ liệu chết, bỏ khỏi schema. Tái tạo khi hiển thị: day_label = map thứ trong tuần theo giờ Asia/Ho_Chi_Minh (Q-06 ĐÃ CHỐT đợt 2: LUÔN lưu UTC, hiển thị theo Asia/Ho_Chi_Minh) sang T2..CN (khớp seed: 2026-10-23 là thứ Sáu → T6, 2026-10-22 → T5, ... đúng như INITIAL_ATTEMPTS L385-L466); month_label = T<tháng>; year_label = <năm 4 chữ số>. Cách này còn cho phép lọc kỳ THẬT nếu Q-05 được duyệt (WHERE submitted_at >= ...) thay cho cộng số ảo BR-32.']
+  total_questions integer [not null, note: 'Tổng số câu của phiên = activeQuizQuestions.length (L1148, BR-25). Ràng buộc: CHECK (total_questions > 0). Đây là số câu SAU khi BE random (R1 đợt 2): N câu KHÔNG trùng lặp + xáo trộn từ pool câu hỏi của bộ đề — không còn "Lượt ôn" (lặp câu); không phải số câu gốc của bộ đề (AS-04).']
+  correct_count   integer [not null, note: 'Số câu trả lời đúng (L1149). Ràng buộc: CHECK (correct_count >= 0 AND correct_count <= total_questions). Lưu sẵn thay vì tính lại để dashboard không phải quét attempt_answers (BR-31).']
+  score           real    [not null, note: 'Điểm hệ 10, đã làm tròn 1 chữ số thập phân: score = round(correct/total*10, 1) (L1127, BR-25). Ràng buộc: CHECK (score >= 0 AND score <= 10). Lưu giá trị đã chốt tại lúc nộp — điểm lịch sử không đổi nếu công thức chấm thay đổi.']
+  duration_sec    integer [not null, default: 0, note: 'Thời lượng làm bài tính bằng giây = quizElapsedSec tại lúc nộp (L1151, BR-23). Ràng buộc: CHECK (duration_sec >= 0). Không có giới hạn trên vì UI không auto-submit và không giới hạn thời gian (Q-12).']
+  created_at      text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc tạo dòng, ISO-8601 UTC. Với luồng nộp bài bình thường bằng submitted_at; khác đi chỉ khi import/khôi phục dữ liệu.']
+  updated_at      text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Bất biến sau insert (BR-27) ⇒ luôn bằng created_at. Khai báo để tuân quy ước (d); nếu có sửa chữa dữ liệu thủ công thì đây là mốc ghi nhận.']
+
+  indexes {
+    (exam_id, submitted_at) [name: 'idx_attempts_exam_submitted']
+    (subject_id, submitted_at) [name: 'idx_attempts_subject_submitted']
+    (submitted_at) [name: 'idx_attempts_submitted_at']
+  }
+
+  Note: '''Lượt làm bài — snapshot kết quả một lần nộp (domain-core §4.6, UC-20).
+    Chỉ INSERT: không UPDATE, không DELETE (BR-27, §4.6 ghi "immutable").
+    Denormalize `exam_title` + `subject_name` (BR-26 L1140-L1142) để lịch sử KHÔNG đổi khi
+    bộ đề/môn được đổi tên về sau; vì vậy khi hiển thị (SCREEN-01 L1830-L1856, OVL-05
+    L2268-L2310) phải đọc 2 cột snapshot này, KHÔNG join để lấy tên.
+    KHÔNG lưu: `quizUserAnswers`, `activeQuizQuestions`, `lastQuizResult` (RAM, §4.7);
+    4 nhãn `period_tag`/`day_label`/`month_label`/`year_label` — xem note cột
+    `submitted_at`.
+    Một bộ đề có thể có nhiều lượt (UC-22 "Làm lại đề"); không có unique theo exam.
+    Index `idx_attempts_exam_submitted`: UC-17 + BR-28 — lịch sử một bộ đề, mới nhất
+    trước; cũng là index cho FK exam_id. Đánh số "Lần #n" theo thứ tự này (Q-07: mới nhất
+    là #1, khớp hành vi prepend L1154).
+    Index `idx_attempts_subject_submitted`: UI hiện chỉ đọc subject_name snapshot (L1842)
+    nên chưa có truy vấn lọc theo subject_id; giữ vì (i) phục vụ kiểm tra FK/RESTRICT của
+    subjects, (ii) sẵn cho thống kê theo môn và cho Q-05 nếu bật lọc kỳ thật.
+    Index `idx_attempts_submitted_at`: BR-36 (L1830-L1856) — 6 lượt gần nhất toàn cục,
+    ORDER BY submitted_at DESC LIMIT 6; cũng dùng cho lọc kỳ nếu Q-05 được duyệt.'''
+}
+
+Table app_settings {
+  key        text    [pk, note: 'Khóa setting — vd: theme.']
+  value      text    [not null, note: 'Giá trị; theme ∈ light|dark|system.']
+  updated_at text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'ISO-8601 UTC. Ghi lại mỗi lần upsert setting.']
+
+  Note: '''Cài đặt app dạng key-value (domain-core §4.10 AppSetting) — [CẬP NHẬT đợt 2, Q-13/Q-14/R2].
+    Seed: `theme = system` (mặc định). Ghi cùng transaction hoặc upsert khi đổi theme.
+    Chỉ lưu setting nhỏ dạng key-value; KHÔNG lưu dữ liệu nghiệp vụ.
+    Bảng độc lập, không FK; PK `key` đủ cho lookup theo khóa.'''
+}
+
+// ============================================================================
+// BẢNG MỚI ĐỢT 2 — attempt_answers (Q-03 ĐÃ CHỐT CHÍNH THỨC). Bảng cuối file chứa phụ lục.
+// ============================================================================
+
+Table attempt_answers {
+  id                 text    [pk, note: 'Surrogate PK. CỐ Ý KHÔNG dùng composite (attempt_id, question_id): theo BR-21 cũ, requestedCount > pool.length sinh bản sao câu (mỗi bản sao có id mới `quiz-q-{i}-{src}`, L1093-L1106); đợt 2 BỎ "Lượt ôn" (không lặp câu — xem cột position) nhưng VẪN giữ surrogate PK cho an toàn migration. Khóa tự nhiên thật là (attempt_id, position).']
+  attempt_id         text    [not null, note: 'FK → attempts.id, ON DELETE CASCADE (Ref fk_attempt_answers_attempt). Một dòng = một câu trong phiên của lượt làm đó.']
+  question_id        text    [null, note: 'FK MỀM → questions.id, NULL được, ON DELETE SET NULL. Vì sao mềm: editor sinh lại id câu mỗi lần parse JSON/TXT (L71-L88, L109-L118) và lưu bộ đề ghi đè toàn bộ danh sách câu (BR-12) ⇒ id câu có thể biến mất. NULL = câu gốc không còn tồn tại, không phải lỗi dữ liệu.']
+  position           integer [not null, note: 'Thứ tự 0-based của câu trong PHIÊN làm bài (không phải thứ tự trong bộ đề) — do BE random sinh theo R1 (ĐÃ CHỐT đợt 2): random mặc định BẬT, lấy N câu KHÔNG trùng lặp từ pool rồi xáo trộn; N ≥ tổng số câu vẫn xáo toàn bộ. Không còn "Lượt ôn" (lặp câu) ⇒ mỗi câu gốc tối đa 1 dòng/lượt. Ràng buộc: UNIQUE (attempt_id, position) + CHECK (position >= 0).']
+  selected_option_id text    [null, note: 'FK MỀM → answer_options.id, NULL được (ON DELETE SET NULL). ĐÃ CHỐT đợt 2 — GIỮ CỘT nhưng KHÔNG còn là nguồn chấm: chỉ lưu "lựa chọn hiển thị đầu" (option có position nhỏ nhất trong tập đã chọn; NULL nếu bỏ trống) làm đại diện cho FK + index idx_attempt_answers_selected_option. Nguồn sự thật để chấm là `selected_option_ids`. Lý do giữ: không phá thiết kế index/ON DELETE SET NULL sẵn có và vẫn cho query nhanh "từng chọn option này".']
+  selected_option_ids text   [not null, default: '[]', note: '[CẬP NHẬT đợt 2 — Q-10 CHỐT] Tập đáp án đã chọn: JSON array các answer_options.id, vd `["o-1","o-3"]`, sắp theo position. `[]` = bỏ trống câu này (BR-24). Nguồn sự thật để chấm nhiều đáp án: câu ĐÚNG khi tập này TRÙNG KHỚP HOÀN TOÀN tập đáp án đúng.']
+  question_text text [not null, default: '', note: '[CẬP NHẬT đợt 5] Q-04 ĐÃ CHỐT, BR-81: snapshot nội dung câu hỏi khi nộp; review đọc từ snapshot.']
+  options_snapshot text [not null, default: '[]', note: 'Q-04/BR-81 ĐÃ CHỐT (đợt 5): JSON array {id,text} của toàn bộ options khi nộp; không join options hiện tại để review.']
+  correct_option_ids text [not null, default: '[]', note: 'Q-04/BR-81 ĐÃ CHỐT (đợt 5): JSON array ID đáp án đúng tại thời điểm nộp; repository encode/decode sang mảng trên wire.']
+  option_order text [not null, default: '[]', note: '[CẬP NHẬT đợt 3 — Q-19 CHỐT] Thứ tự các lựa chọn của câu trong PHIÊN làm bài: JSON array các answer_options.id theo thứ tự hiển thị đã xáo (vd `["o-3","o-1","o-2"]`). Dùng để khôi phục đúng thứ tự option khi xem lại đáp án (UC-21), vì BE xáo option cùng câu (Q-19). `[]` = chưa ghi nhận / câu không có lựa chọn. Nguồn sự thật thứ tự hiển thị là cột này, không phải position gốc của answer_options.']
+  is_correct         integer [not null, default: 0, note: '[CẬP NHẬT đợt 2 — Q-10 CHỐT] Snapshot kết quả chấm tại thời điểm nộp (BR-25): câu ĐÚNG khi `selected_option_ids` TRÙNG KHỚP HOÀN TOÀN tập đáp án đúng của câu (`answer_options.is_correct = 1`); chọn sai tập con, thừa đáp án, hoặc `[]` đều tính SAI. Chấm trên snapshot `answer_options.is_correct` tại lúc nộp, không join về sau vì đáp án có thể bị sửa khi bộ đề cập nhật. Ràng buộc: CHECK (is_correct IN (0,1)).']
+  created_at         text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Mốc tạo dòng, ISO-8601 UTC — ghi cùng transaction với attempts. UI không hiển thị.']
+  updated_at         text    [not null, default: `(strftime('%Y-%m-%dT%H:%M:%fZ','now'))`, note: 'Bất biến sau insert ⇒ luôn bằng created_at. Khai báo để tuân quy ước (d).']
+
+  indexes {
+    (attempt_id, position) [unique, name: 'uq_attempt_answers_attempt_position']
+    (question_id) [name: 'idx_attempt_answers_question']
+    (selected_option_id) [name: 'idx_attempt_answers_selected_option']
+  }
+
+  Note: '''BẢNG CHÍNH THỨC — Q-03 ĐÃ CHỐT đợt 2: giữ `attempt_answers`, mở khóa UC-21
+    (xem lại đáp án chi tiết SAU KHI đóng app — trước đây đóng app là mất vĩnh viễn chi
+    tiết bài làm, L1116-L1152, L2771-L2777). Domain-core §4.8 ghi `AttemptAnswer` chỉ tồn
+    tại trong RAM và AS-05 chốt "Attempt chỉ lưu tổng hợp" — đợt 2 phủ định: chi tiết bài
+    làm phải sống lâu như `attempts`.
+    Đánh đổi còn lại: (i) +N dòng mỗi lượt làm (N = total_questions, tới 200 theo NFR-09);
+    (ii) phụ thuộc id câu hỏi KHÔNG ổn định (parse sinh lại id — L71-L88) nên
+    `question_id` phải nullable + ON DELETE SET NULL; (iii) [CẬP NHẬT đợt 5] Q-04 ĐÃ CHỐT: lưu `question_text`,
+    `options_snapshot` (JSON array {id,text}), `correct_option_ids` (JSON array ID)
+    trong transaction nộp bài (BR-81). Review đọc snapshot, không phụ thuộc câu hỏi
+    hiện tại; FK mềm có thể NULL mà nội dung lịch sử vẫn giữ nguyên.
+    Index `uq_attempt_answers_attempt_position`: đọc chi tiết một lượt làm theo đúng thứ
+    tự câu trong phiên (SCREEN-07, UC-21); cũng phục vụ FK attempt_id và chặn trùng vị trí
+    trong cùng lượt (UNIQUE(attempt_id, position) — mỗi câu một vị trí trong phiên; BR-21 cũ (lặp câu) đã bỏ ở đợt 2, giữ unique để chống trùng position).
+    Index `idx_attempt_answers_question` và `idx_attempt_answers_selected_option`: bắt buộc
+    cho 2 FK `ON DELETE SET NULL` — khi một question/option bị xóa (lưu bộ đề thực chất là
+    xóa và chèn lại toàn bộ câu/lựa chọn), SQLite phải quét bảng con để set NULL; thiếu
+    index là full scan.
+
+    [CẬP NHẬT đợt 3 — Q-19] `option_order` (JSON array các option_id) lưu thứ tự option của
+    câu trong phiên sau khi xáo; dùng để khôi phục đúng thứ tự hiển thị khi xem lại đáp án
+    (UC-21). Nếu thiếu cột này, thứ tự hiển thị sau xáo bị mất và màn review không thể tái
+    hiện phiên gốc.
+
+    ========================================================================
+    # PHỤ LỤC — Ánh xạ thực thể & điểm đã chốt/chưa chốt (áp dụng cho TOÀN schema)
+    Phụ lục đặt ở đây vì DBML không hỗ trợ Note cấp root; `attempt_answers` là bảng cuối
+    file (Q-03 ĐÃ CHỐT đợt 2 ⇒ không còn phải chuyển phụ lục đi đâu).
+    ========================================================================
+
+    ## 1. Ánh xạ thực thể domain-core → bảng
+
+    | Thực thể (domain-core §4) | Bảng | Ghi chú |
+    |---|---|---|
+    | Subject §4.2 | `subjects` | 1–N `exams` qua `exams.subject_id`. Tạo + đọc + sửa tên; xóa mềm (Q-01 ĐÃ CHỐT đợt 2: thêm `deleted_at text null`, truy vấn lọc `WHERE deleted_at IS NULL`). [CẬP NHẬT đợt 3] thêm `delete_batch_id text null` (Q-21) để khôi phục đúng phạm vi đợt xóa; partial unique index vẫn đúng khi khôi phục (đổi tên trước nếu conflict — BR-78). Số bộ đề/tổng câu là dữ liệu dẫn xuất. |
+    | Exam §4.3 | `exams` | Bỏ cột nhúng `questions`; thay bằng quan hệ + `questions.position`. Số câu dẫn xuất từ COUNT. Không có cột `status`. Xóa mềm `deleted_at` giống `subjects` (Q-01 ĐÃ CHỐT đợt 2). [CẬP NHẬT đợt 3] thêm `delete_batch_id text null` (Q-21); khôi phục set deleted_at = NULL, conflict partial unique index ⇒ đổi tên trước (BR-78). |
+    | Question §4.4 | `questions` | Thêm `exam_id` + `position` — hai thứ ref-ui để ngầm định trong thứ tự mảng (AS-07, L2314). `ask` rỗng hợp lệ (BR-47). |
+    | AnswerOption §4.5 | `answer_options` | Thêm `question_id` + `position` (nhãn A/B/C/D sinh từ position, L700-L702). `is_correct` là cờ đúng/sai duy nhất dạng 0/1. |
+    | Attempt §4.6 | `attempts` | Bỏ 4 cột nhãn kỳ; trường thời gian nộp chuẩn hóa thành `submitted_at` UTC. Giữ snapshot `exam_title`/`subject_name` (BR-26). Bất biến (BR-27). |
+    | QuizSession §4.7 | KHÔNG có bảng | State RAM: `activeQuizQuestions`, `quizUserAnswers`, `quizStartTime`, `quizElapsedSec`, `lastQuizResult`. Khi nộp: tổng hợp vào `attempts` (total, correct, score, duration) + chi tiết từng câu vào `attempt_answers` (đợt 2). |
+    | AttemptAnswer §4.8 | `attempt_answers` **CHÍNH THỨC** | Q-03 ĐÃ CHỐT đợt 2 — mở khóa UC-21 (xem lại đáp án chi tiết sau khi đóng app). Lưu tập đáp án đã chọn qua `selected_option_ids` (Q-10). [CẬP NHẬT đợt 3] thêm `option_order` (Q-19) lưu thứ tự option đã xáo của câu trong phiên. |
+    | State UI §4.9 | KHÔNG có bảng | `activeTab`, `sidebarOpen`, `logoHovered`, `statsPeriod`, `chartMetric`, `examViewMode`, `selectedSubjectId`/`selectedExamId`, `viewResetCounter`, form tạo môn, `showAnswersSwitch`, `showHistoryModal`, `showQuizConfigModal`, `quizQuestionCountInput`, `editingExamTitle`, `editorQuestions`, `editorFormatTab`, `rawTextCode`, `parseError`, `showAllQuestionsDialog`, `focusedQuestionId`, `isEditingExistingExam`, `showQuizAllDialog`, `toastMessage`. Trạng thái hiển thị, mất khi đóng app là đúng thiết kế (BR-50, UC-25). |
+    | Editor draft (`editorQuestions`) | KHÔNG có bảng | Q-16 để ngỏ (không autosave, NFR-07). Nếu duyệt "lưu nháp", thêm `exam_drafts` — chưa làm vì UI không có nút Lưu nháp. |
+    | App settings §4.10 | `app_settings` | [CẬP NHẬT đợt 2] Q-13/Q-14/R2 CHỐT: thêm bảng key-value; seed `theme = system`. Ref-ui cũ chỉ bắn toast (L1466-L1472) nhưng schema đi trước cho màn Settings tới. |
+    | User / Auth / Role | KHÔNG có bảng | Single-user local, không đăng nhập, profile là JSX tĩnh (NFR-03, AS-02, L1406-L1417). |
+
+    **Quan hệ:** Không có bảng trung gian n-n; quan hệ Subject 1–N Exam 1–N Question 1–N
+    AnswerOption, cộng Exam 1–N Attempt và Attempt 1–N AttemptAnswer.
+
+    **Enum:** file này khai báo **0 Enum DBML**. Lý do: không có cột nào trong schema lưu
+    giá trị enum. `score_band` (Xuất sắc score >= 8.5 / Khá giỏi 7.0 <= score < 8.5 / Cần
+    cố gắng score < 7.0 — BR-34) là giá trị DẪN XUẤT từ `attempts.score`, tính bằng CASE
+    khi query; `exam_status` không tồn tại (Exam không có cột trạng thái, §4.3);
+    `stats_period` (week/month/year) là state UI §4.9. SQLite không có ENUM — nếu sau này
+    cần cột enum thật thì triển khai `text` + `CHECK (col IN (...))`.
+
+    ## 2. Điểm đã chốt & còn mở (ảnh hưởng schema)
+
+    **ĐÃ CHỐT (đợt 2):** Q-01, Q-02, Q-03, Q-05, Q-06, Q-10, Q-15. **ĐÃ CHỐT (đợt 3):**
+    Q-19 (xáo option cùng câu → `attempt_answers.option_order`), Q-21 (thùng rác →
+    `subjects`/`exams.delete_batch_id` + trash indexes). **ĐÃ CHỐT (đợt 5):** Q-04/BR-81 (snapshot nội dung câu hỏi, options và đáp án đúng khi nộp; review đọc snapshot). **Còn mở:** Q-07, Q-09, Q-16 —
+    cột cuối ghi cách đổi nếu user quyết khác.
+
+    | ID | Vấn đề | Phương án đề xuất | Cách đổi nếu user quyết khác |
+    |---|---|---|---|
+    | Q-01 | Xóa môn / xóa bộ đề | **ĐÃ CHỐT (đợt 2): SOFT DELETE** — thêm `deleted_at text null` cho `subjects`/`exams`, truy vấn lọc `WHERE deleted_at IS NULL`; `attempts.exam_id`/`subject_id` giữ nguyên NOT NULL + RESTRICT (đã không còn hard delete ⇒ RESTRICT không kích hoạt, lịch sử luôn giữ). KHÔNG thêm index cho `deleted_at`: bảng nhỏ, app single-user local, quét toàn bảng là đủ — cần thì bổ sung index sau. | — (đã chốt). |
+    | Q-02 | Cập nhật bộ đề có đổi `createdAt` / thêm `updatedAt`? | **ĐÃ CHỐT (đợt 2):** giữ `created_at`, THÊM `updated_at` — `exams` là bảng chính cần (Q-02, khớp domain-core); các bảng khác thêm theo quy ước (d) (khác ref-ui) | — (đã chốt; muốn khớp tuyệt đối ref-ui thì bỏ `updated_at`, khi đó mất khả năng hiển thị "sửa lần cuối"). |
+    | Q-03 | Lưu từng câu trả lời của lượt làm? | **ĐÃ CHỐT (đợt 2): CÓ** — `attempt_answers` là bảng CHÍNH THỨC, mở khóa UC-21 (xem lại đáp án chi tiết sau khi đóng app) | — (đã chốt; nếu hận hồi thì migration drop bảng + 3 Ref `fk_attempt_answers_*`, 5 bảng lõi không ảnh hưởng). |
+    | Q-04 | Sửa đề sau khi đã có lượt làm thì lịch sử hiển thị theo đề cũ hay mới? | **ĐÃ CHỐT (đợt 5)**: snapshot `question_text`, `options_snapshot`, `correct_option_ids` khi nộp; review đọc snapshot (BR-81). | Đã có cột trong `attempt_answers`. |
+    | Q-05 | Kỳ thống kê có lọc thật theo thời gian? | **ĐÃ CHỐT (đợt 2): giữ nguyên hiện trạng** — schema sẵn sàng (`submitted_at` + `idx_attempts_submitted_at`), UI thống kê vẫn cộng offset ảo (BR-32) | Khi muốn lọc thật: `WHERE submitted_at >= ?`; bỏ các hằng số +59/+1420/+242/+6150. Không đổi schema. |
+    | Q-06 | Chuẩn thời gian UTC hay local | **ĐÃ CHỐT (đợt 2):** LƯU UTC toàn bộ; hiển thị `attempts.submitted_at` theo **Asia/Ho_Chi_Minh**; `exams.created_at` hiển thị `YYYY-MM-DD HH:mm` theo **Asia/Ho_Chi_Minh** (đổi formatter; ref-ui đang render thẳng chuỗi UTC — BR-64, NFR-15); `subjects.created_at` không hiển thị | Chỉ đổi formatter hiển thị khi cần; không đổi schema. |
+    | Q-07 | "Lần #1" là lượt mới nhất hay cũ nhất? | **Chưa chốt** — phương án tạm: Mới nhất = #1 (`ORDER BY submitted_at DESC`), khớp prepend L1154/BR-28 | Đổi `ORDER BY submitted_at ASC` khi đánh số; không đổi schema. |
+    | Q-09 | Chặn cứng số câu ≤ 200? | **Chưa chốt** — phương án tạm: KHÔNG CHECK ở DB (chỉ là ràng buộc HTML `max`, NFR-09, AS-09) | Thêm `CHECK (total_questions <= 200)` ở `attempts`; lưu ý sẽ chặn dữ liệu lịch sử nếu sau này nâng giới hạn. |
+    | Q-10 | Nhiều đáp án đúng trong một câu thì chấm thế nào? | **ĐÃ CHỐT (đợt 2): CHẤP NHẬN NHIỀU ĐÁP ÁN ĐÚNG** — lưu tập đáp án đã chọn vào `attempt_answers.selected_option_ids` (JSON array answer_options.id, `[]` = bỏ trống); câu ĐÚNG khi tập chọn TRÙNG KHỚP HOÀN TOÀN tập đáp án đúng. App validate (BR-47 mới): câu ≥ 2 lựa chọn, ≥ 1 đáp án đúng | — (đã chốt; DB vẫn không chặn được đa đáp án, validate ở tầng app; không thêm partial unique index `WHERE is_correct = 1`). |
+    | Q-15 | Chặn trùng tên môn / trùng tên bộ đề? | **ĐÃ CHỐT (đợt 2): CHẶN bằng unique PARTIAL INDEX** — `UNIQUE (lower(trim(subjects.name))) WHERE deleted_at IS NULL` và `UNIQUE (exams.subject_id, lower(trim(title))) WHERE deleted_at IS NULL` — so khớp `lower(trim(...))` (đồng bộ note cột `subjects.name`/`exams.title`), partial index `WHERE deleted_at IS NULL` không đụng dòng đã xóa mềm; SQL khai báo ngay tại bảng `subjects`/`exams` (điểm này C-a phụ trách) | — (đã chốt; hận hồi = bỏ 2 partial index; BR-04 cũ cho phép trùng). |
+    | Q-16 | Lưu draft editor khi rời màn? | **Chưa chốt** — phương án tạm: KHÔNG có bảng (UI không autosave, NFR-07) | Thêm bảng `exam_drafts` (subject_id, title, payload text, updated_at) — chỉ khi tính năng được duyệt. |
+    | Q-19 | Xáo option cùng câu? | **ĐÃ CHỐT (đợt 3): XÁO** — BE xáo trộn thứ tự các lựa chọn của câu trong phiên; lưu thứ tự đó vào `attempt_answers.option_order` (JSON array các option_id) để khôi phục đúng khi xem lại (UC-21). | — (đã chốt; nếu không xáo thì `option_order` = thứ tự position gốc, vẫn ghi để nhất quán). |
+    | Q-21 | Thùng rác + khôi phục? | **ĐÃ CHỐT (đợt 3):** soft delete giữ `deleted_at`; thêm `delete_batch_id` cho `subjects`/`exams` để khôi phục đúng phạm vi đợt xóa (khôi phục môn chỉ khôi phục exams bị xóa cùng đợt); trash indexes theo `deleted_at IS NOT NULL`, `delete_batch_id`, `(subject_id, deleted_at)`; xóa vĩnh viễn chạy trong transaction (purge steps ghi ở Note `subjects`); khôi phục set `deleted_at = NULL` → nếu trùng tên với bản ghi đang sống thì partial unique index conflict → phải đổi tên trước (BR-78); không retention [GIẢ ĐỊNH]. | — (đã chốt). |
+
+    **Về ràng buộc đáp án mỗi câu:** `[CẬP NHẬT đợt 2]` BR-47 MỚI — app validate khi lưu:
+    mỗi câu phải có **≥ 2 lựa chọn** và **≥ 1 đáp án đúng**; nhiều đáp án đúng là HỢP LỆ
+    (chấm theo tập đáp án đã chọn — Q-10). SQLite KHÔNG thể CHECK عبر nhiều dòng ⇒
+    validate ở tầng app; CỐ Ý KHÔNG thêm partial unique index
+    `answer_options(question_id) WHERE is_correct = 1` vì sẽ chặn dữ liệu hợp lệ.
+    (BR-46 cũ "đúng duy nhất 1" qua radio editor chỉ còn là hành vi UI mặc định.)
+
+    **Ghi chú về thứ tự hiển thị (AS-07).** Mọi danh sách trong UI lấy thứ tự từ mảng,
+    không có ORDER BY tường minh. Thứ tự tương đương khi query: subjects `created_at ASC`
+    (môn mới append cuối, BR-05); exams trong một môn `created_at DESC` (bộ đề mới prepend,
+    BR-11); questions `position ASC`; answer_options `position ASC`; attempts
+    `submitted_at DESC` (lượt mới prepend, BR-27); `attempt_answers` `position ASC` (thứ tự
+    câu trong phiên do BE random sinh — R1 đợt 2).'''
+}

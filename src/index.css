@@ -1,0 +1,24 @@
+@import "tailwindcss";
+@import "./styles/tokens.css";
+@import "./styles/neumorphic.css";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --color-app: var(--app-bg);
+  --color-neu: var(--neu-surface);
+  --color-neu-raised: var(--neu-surface-raised);
+  --color-neu-inset: var(--neu-inset);
+  --color-ink: var(--ink-800);
+  --color-ink-strong: var(--ink-900);
+  --color-cta-from: var(--cta-from);
+  --color-cta-to: var(--cta-to);
+  --color-border-strong: var(--border-strong);
+}
+
+html, body, #root { height: 100%; }
+body {
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--app-bg);
+  color: var(--ink-800);
+}

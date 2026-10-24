@@ -1,0 +1,8 @@
+# Single-package workspace — chỉ tồn tại để chứa allowBuilds (pnpm 11 bắt buộc).
+packages:
+  - '.'
+
+# pnpm 11 chỉ đọc allowBuilds từ file này, KHÔNG đọc package.json#pnpm.onlyBuiltDependencies.
+# esbuild (transitive của vite) cần postinstall để tải native binary.
+allowBuilds:
+  esbuild: true

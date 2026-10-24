@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ansask-desktop</title>
+    <!--
+      Anti-flash theme — NFR-16, R2.
+      Chạy TRƯỚC bundle React. `localStorage` có thể throw (private mode,
+      cookie bị block); khi đó PHẢI fallback sang prefers-color-scheme của OS,
+      không được coi như "light" mặc định.
+    -->
+    <script>
+      (function () {
+        var saved = null;
+        try {
+          saved = localStorage.getItem('theme');
+        } catch (e) {
+          /* localStorage không khả dụng → saved = null → rơi xuống fallback */
+        }
+        if (saved === 'light') return;
+        if (saved === 'dark') {
+          document.documentElement.classList.add('dark');
+          return;
+        }
+        // saved === 'system' | null | localStorage throw
+        try {
+          if (
+            window.matchMedia &&
+            window.matchMedia('(prefers-color-scheme: dark)').matches
+          ) {
+            document.documentElement.classList.add('dark');
+          }
+        } catch (e) {
+          /* matchMedia không khả dụng → giữ light, không crash */
+        }
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

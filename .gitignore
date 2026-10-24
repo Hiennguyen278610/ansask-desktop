@@ -1,0 +1,28 @@
+# ---------- Dependencies ----------
+node_modules/
+.pnpm-store/
+
+# ---------- Build artifacts ----------
+dist/
+dist-ssr/
+*.local
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# ---------- Tauri / Rust ----------
+src-tauri/target/
+src-tauri/gen/schemas/
+
+# ---------- OS / Editor ----------
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+!.vscode/extensions.json
+
+# ---------- Env ----------
+.env
+.env.*
+!.env.example

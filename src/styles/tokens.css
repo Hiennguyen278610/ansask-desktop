@@ -1,0 +1,56 @@
+/* Design tokens — design-system.md §2.1a–f.
+   TOÀN BỘ hex của app chỉ được phép định nghĩa ở file này. */
+
+:root {
+  --app-bg: #e8edf4;
+  --neu-surface: #eef2f7;
+  --neu-surface-raised: #f5f8fc;
+  --neu-inset: #e9eef5;
+  --ink-900: #1e232a;
+  --ink-800: #262b33;
+  --ink-700: #2d333d;
+  --ink-950: #1d2128;
+  --ink-1000: #14171c;
+  --shadow-1: #cfd6e2;
+  --shadow-2: #d0d8e4;
+  --shadow-3: #ced6e2;
+  --shadow-4: #c9d2e0;
+  --shadow-5: #c5cdd9;
+  --shadow-inset: #cfd7e3;
+  --highlight: #ffffff;
+  --border-strong: rgba(255, 255, 255, 0.85);
+  --cta-from: #2d333d;
+  --cta-to: #1d2128;
+  --cta-fg: #ffffff;
+  --scrollbar-thumb: #cbd3e0;
+  --scrollbar-thumb-hover: #9aa6b8;
+  --syntax-ask: #e11d48;
+  --syntax-ans: #2563eb;
+}
+
+.dark {
+  --app-bg: #1a1f27;
+  --neu-surface: #242b36;
+  --neu-surface-raised: #2c3441;
+  --neu-inset: #20262f;
+  --ink-900: #eef2f7;
+  --ink-800: #cbd5e1;
+  --ink-700: #3a4552;
+  --ink-950: #252d38;
+  --ink-1000: #161b22;
+  --shadow-1: #10141a;
+  --shadow-2: #11161d;
+  --shadow-3: #12171e;
+  --shadow-4: #141a22;
+  --shadow-5: #0e1218;
+  --shadow-inset: #161b23;
+  --highlight: #39424f;
+  --border-strong: rgba(255, 255, 255, 0.06);
+  --cta-from: #3a4552;
+  --cta-to: #252d38;
+  --cta-fg: #ffffff;
+  --scrollbar-thumb: #3a4552;
+  --scrollbar-thumb-hover: #4a5568;
+  --syntax-ask: #fb7185;
+  --syntax-ans: #60a5fa;
+}
