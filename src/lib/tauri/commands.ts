@@ -24,6 +24,10 @@ export interface AttemptSummary { id: string; examId: string; examTitle: string;
 export interface GradedQuestionDto { questionId: string; position: number; questionText: string; optionsSnapshot: OptionDto[]; correctOptionIds: string[]; selectedOptionIds: string[]; optionOrder: string[]; isCorrect: boolean; }
 export interface AttemptReviewDto { attemptId: string; examId: string; subjectId: string; examTitle: string; score: number; totalQuestions: number; correctCount: number; questions: GradedQuestionDto[]; }
 
+export interface SeriesPointDto { label: string; count: number; avgScore: number; }
+export interface ScoreDistributionDto { excellentPct: number; goodPct: number; averagePct: number; }
+export interface StatsOverviewDto { totalAttempts: number; avgScore: number; totalQuestions: number; accuracyRate: number; series: SeriesPointDto[]; distribution: ScoreDistributionDto; }
+
 export interface TrashItemDto {
   id: string;
   kind: "subject" | "exam";
@@ -56,6 +60,8 @@ export function attemptSubmit(req: AttemptSubmitReq): Promise<AttemptResultDto> 
 export function attemptList(examId: string): Promise<AttemptSummary[]> { return invoke('attempt_list', { req: { examId } }); }
 export function attemptListAll(): Promise<AttemptSummary[]> { return invoke('attempt_list_all'); }
 export function attemptReview(id: string): Promise<AttemptReviewDto> { return invoke('attempt_review', { req: { id } }); }
+
+export function statsOverview(period: "week" | "month" | "year"): Promise<StatsOverviewDto> { return invoke('stats_overview', { req: { period } }); }
 
 export function trashList(): Promise<TrashItemDto[]> { return invoke('trash_list'); }
 export function subjectRestore(id: string, newName?: string): Promise<void> { return invoke('subject_restore', { req: { id, newName } }); }

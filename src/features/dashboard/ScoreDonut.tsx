@@ -1,6 +1,6 @@
 interface Props {
   avgScore: string;
-  distribution: { excellentPct: string; goodPct: string; averagePct: string };
+  distribution: { excellentPct: number; goodPct: number; averagePct: number };
 }
 
 export function ScoreDonut({ avgScore, distribution }: Props) {
@@ -14,11 +14,11 @@ export function ScoreDonut({ avgScore, distribution }: Props) {
         <svg className="w-full h-full -rotate-90" viewBox="0 0 120 120">
           <circle cx="60" cy="60" r="46" fill="none" stroke="var(--chart-bar-track)" strokeWidth="12" />
           <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ink-900)" strokeWidth="12"
-            strokeDasharray={`${(Number(distribution.excellentPct) / 100) * 289} 289`} strokeLinecap="round" />
+            strokeDasharray={`${(distribution.excellentPct / 100) * 289} 289`} strokeLinecap="round" />
           <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ink-700)" strokeWidth="12"
-            strokeDasharray={`${(Number(distribution.goodPct) / 100) * 289} 289`} strokeDashoffset={`-${(Number(distribution.excellentPct) / 100) * 289}`} strokeLinecap="round" />
+            strokeDasharray={`${(distribution.goodPct / 100) * 289} 289`} strokeDashoffset={`-${(distribution.excellentPct / 100) * 289}`} strokeLinecap="round" />
           <circle cx="60" cy="60" r="46" fill="none" stroke="var(--ink-800)" strokeWidth="12" opacity="0.4"
-            strokeDasharray={`${(Number(distribution.averagePct) / 100) * 289} 289`} strokeDashoffset={`-${((Number(distribution.excellentPct) + Number(distribution.goodPct)) / 100) * 289}`} strokeLinecap="round" />
+            strokeDasharray={`${(distribution.averagePct / 100) * 289} 289`} strokeDashoffset={`-${((distribution.excellentPct + distribution.goodPct) / 100) * 289}`} strokeLinecap="round" />
         </svg>
         <div className="absolute inset-8 rounded-full neu-card-inset flex flex-col items-center justify-center text-center">
           <span className="text-xl font-bold text-ink-strong">{avgScore}đ</span>
