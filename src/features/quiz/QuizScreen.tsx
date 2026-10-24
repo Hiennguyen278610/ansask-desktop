@@ -41,7 +41,6 @@ export function QuizScreen() {
     
     // Check xem đã chọn đáp án chưa
     const hasSelected = (quiz.answers[q.id] || []).length > 0;
-    const isMultiChoice = q.options.length > 4;
 
     return (
       <div className="space-y-6 animate-fade-in relative pb-20 max-w-3xl mx-auto h-full flex flex-col">

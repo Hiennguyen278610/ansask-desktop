@@ -39,7 +39,7 @@ export function ExamOverviewScreen() {
         await writeTextFile(filePath, txtContent);
         showToast('Đã xuất file TXT thành công!');
       }
-    } catch (err) { showToast('Lỗi khi lưu file.'); }
+    } catch { showToast('Lỗi khi lưu file.'); }
   };
 
   if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải...</div>;

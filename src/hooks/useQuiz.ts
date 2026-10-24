@@ -74,7 +74,7 @@ export function useQuiz(examId?: string) {
     const selected = answers[qId] || [];
     if (selected.length === 0) return showToast('Vui lòng chọn đáp án!');
     
-    const correctIds = q.options.filter(o => o.is_correct).map(o => o.id).sort();
+    const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id).sort();
     const selIds = [...selected].sort();
     
     const isCorrect = JSON.stringify(correctIds) === JSON.stringify(selIds);
@@ -111,7 +111,7 @@ export function useQuiz(examId?: string) {
           questionId: q.id,
           selectedOptionIds: ansToSubmit[q.id] || [],
           position: idx,
-          optionOrder: q.option_order,
+          optionOrder: q.optionOrder,
         }))
       };
       const res = await attemptSubmit(req);
