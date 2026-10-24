@@ -61,16 +61,6 @@ pub fn list(pool: &DbPool) -> Result<Vec<TrashItemDto>, AppError> {
     Ok(items)
 }
 
-pub fn get_exam_batch_id(pool: &DbPool, exam_id: &str) -> Result<String, AppError> {
-    let conn = pool.get()?;
-    let batch_id: Option<String> = conn.query_row(
-        "SELECT delete_batch_id FROM exams WHERE id = ?1",
-        [exam_id],
-        |r| r.get(0),
-    )?;
-    Ok(batch_id.unwrap_or_default())
-}
-
 pub fn get_subject_batch_id(pool: &DbPool, subject_id: &str) -> Result<String, AppError> {
     let conn = pool.get()?;
     let batch_id: Option<String> = conn.query_row(

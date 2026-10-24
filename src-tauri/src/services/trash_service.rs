@@ -20,7 +20,7 @@ pub fn restore_subject(pool: &DbPool, req: RestoreReq) -> Result<(), AppError> {
         "SELECT 1 FROM subjects WHERE lower(trim(name)) = ?1 AND deleted_at IS NULL LIMIT 1",
     )?;
     if stmt.query([canonical]).unwrap().next().unwrap().is_some() {
-        return Err(AppError::DuplicateName(name.into()));
+        return Err(AppError::DuplicateName(name));
     }
 
     let batch_id = trash_repo::get_subject_batch_id(pool, &req.id)?;
@@ -46,7 +46,7 @@ pub fn restore_exam(pool: &DbPool, req: RestoreReq) -> Result<(), AppError> {
         .unwrap()
         .is_some()
     {
-        return Err(AppError::DuplicateName(title.into()));
+        return Err(AppError::DuplicateName(title));
     }
 
     trash_repo::restore_exam(pool, &req.id, &title)
