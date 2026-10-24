@@ -1,6 +1,7 @@
 use serde::{ser::SerializeStruct, Serialize, Serializer};
 use thiserror::Error;
 
+#[allow(dead_code)]
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Không tìm thấy: {0}")]
@@ -22,6 +23,7 @@ pub enum AppError {
     Internal(String),
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
 pub struct ValidationIssue {
     pub line: Option<i64>,

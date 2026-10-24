@@ -27,9 +27,9 @@ pub fn upsert(pool: &DbPool, key: &str, value: &str) -> Result<(), AppError> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::db::{create_memory_pool, migrations};
+    use crate::db::{migrations, pool::create_memory_pool};
 
-    fn pool() -> DbPool {
+    fn fresh_db() -> DbPool {
         let pool = create_memory_pool().unwrap();
         let mut conn = pool.get().unwrap();
         migrations::run(&mut conn).unwrap();
@@ -38,27 +38,27 @@ mod tests {
 
     #[test]
     fn get_seeded_theme_returns_system() {
-        assert_eq!(get(&pool(), "theme").unwrap(), Some("system".into()));
+        assert_eq!(get(&fresh_db(), "theme").unwrap(), Some("system".into()));
     }
 
     #[test]
     fn get_missing_returns_none() {
-        assert_eq!(get(&pool(), "nonexistent").unwrap(), None);
+        assert_eq!(get(&fresh_db(), "nonexistent").unwrap(), None);
     }
 
     #[test]
     fn upsert_inserts_new_key() {
-        let p = pool();
-        upsert(&p, "custom", "v1").unwrap();
-        assert_eq!(get(&p, "custom").unwrap(), Some("v1".into()));
+        let pool = fresh_db();
+        upsert(&pool, "custom", "v1").unwrap();
+        assert_eq!(get(&pool, "custom").unwrap(), Some("v1".into()));
     }
 
     #[test]
     fn upsert_overwrites_existing() {
-        let p = pool();
-        upsert(&p, "theme", "dark").unwrap();
-        assert_eq!(get(&p, "theme").unwrap(), Some("dark".into()));
-        upsert(&p, "theme", "light").unwrap();
-        assert_eq!(get(&p, "theme").unwrap(), Some("light".into()));
+        let pool = fresh_db();
+        upsert(&pool, "theme", "dark").unwrap();
+        assert_eq!(get(&pool, "theme").unwrap(), Some("dark".into()));
+        upsert(&pool, "theme", "light").unwrap();
+        assert_eq!(get(&pool, "theme").unwrap(), Some("light".into()));
     }
 }

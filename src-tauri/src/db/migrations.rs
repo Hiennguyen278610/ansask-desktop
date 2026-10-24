@@ -36,7 +36,11 @@ mod tests {
     fn seed_theme_is_system() {
         let conn = fresh();
         let v: String = conn
-            .query_row("SELECT value FROM app_settings WHERE key='theme'", [], |r| r.get(0))
+            .query_row(
+                "SELECT value FROM app_settings WHERE key='theme'",
+                [],
+                |r| r.get(0),
+            )
             .unwrap();
         assert_eq!(v, "system");
     }
@@ -66,20 +70,26 @@ mod tests {
         .unwrap();
     }
 
+    /// Lưu ý: SQLite lower() built-in chỉ xử lý ASCII.
+    /// Việc so khớp tiếng Việt có dấu là trách nhiệm của service layer (Rust + unicode-normalization).
+    /// Test này kiểm tra đúng giới hạn thực tế của DB.
     #[test]
-    fn unique_index_is_case_and_trim_insensitive() {
+    fn unique_index_is_case_and_trim_insensitive_for_ascii() {
         let conn = fresh();
         let now = "2026-01-01T00:00:00.000Z";
         conn.execute(
-            "INSERT INTO subjects (id, name, color, created_at, updated_at) VALUES ('s1','Mạng','#000',?1,?1)",
+            "INSERT INTO subjects (id, name, color, created_at, updated_at) VALUES ('s1','TEST','#000',?1,?1)",
             [now],
         )
         .unwrap();
         let res = conn.execute(
-            "INSERT INTO subjects (id, name, color, created_at, updated_at) VALUES ('s2','  MẠNG  ','#000',?1,?1)",
+            "INSERT INTO subjects (id, name, color, created_at, updated_at) VALUES ('s2','  test  ','#000',?1,?1)",
             [now],
         );
-        assert!(res.is_err(), "phải chặn trùng tên sau lower(trim(...))");
+        assert!(
+            res.is_err(),
+            "phải chặn trùng tên sau lower(trim(...)) với ASCII"
+        );
     }
 
     #[test]

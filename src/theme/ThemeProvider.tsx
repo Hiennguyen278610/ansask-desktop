@@ -1,5 +1,6 @@
-import { createContext, useCallback, useEffect, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { settingGet, settingSet } from '@/lib/tauri/commands';
+import { ThemeContext } from './theme-context';
 import {
   applyTheme,
   persistThemeCache,
@@ -8,14 +9,6 @@ import {
   type ResolvedTheme,
   type ThemeMode,
 } from './theme';
-
-interface ThemeContextValue {
-  mode: ThemeMode;
-  resolved: ResolvedTheme;
-  setMode: (mode: ThemeMode) => void;
-}
-
-export const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
   const [mode, setModeState] = useState<ThemeMode>(() => readStoredTheme());

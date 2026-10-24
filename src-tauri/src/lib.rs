@@ -35,8 +35,8 @@ pub fn run() {
             fs::create_dir_all(&app_dir)?;
             let db_path = app_dir.join("ansask.db");
 
-            let pool = db::pool::create_pool(&db_path)
-                .map_err(|e| format!("Không mở được DB: {e}"))?;
+            let pool =
+                db::pool::create_pool(&db_path).map_err(|e| format!("Không mở được DB: {e}"))?;
 
             {
                 let mut conn = pool.get().map_err(|e| format!("Pool error: {e}"))?;

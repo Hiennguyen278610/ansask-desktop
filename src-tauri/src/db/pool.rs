@@ -17,9 +17,11 @@ pub fn create_pool(db_path: &Path) -> Result<DbPool, Box<dyn std::error::Error>>
 }
 
 /// max_size = 1 → mọi kết nối dùng chung một DB `:memory:`.
+/// Chỉ dùng trong test (`cargo test`) — dead_code ở build dev profile là bình thường.
+#[allow(dead_code)]
 pub fn create_memory_pool() -> Result<DbPool, Box<dyn std::error::Error>> {
-    let manager =
-        SqliteConnectionManager::memory().with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
+    let manager = SqliteConnectionManager::memory()
+        .with_init(|c| c.execute_batch("PRAGMA foreign_keys = ON;"));
     Ok(Pool::builder().max_size(1).build(manager)?)
 }
 
@@ -32,7 +34,9 @@ mod tests {
     fn memory_pool_enables_foreign_keys() {
         let pool = create_memory_pool().unwrap();
         let conn = pool.get().unwrap();
-        let fk: i64 = conn.query_row("PRAGMA foreign_keys", [], |r| r.get(0)).unwrap();
+        let fk: i64 = conn
+            .query_row("PRAGMA foreign_keys", [], |r| r.get(0))
+            .unwrap();
         assert_eq!(fk, 1, "foreign_keys phải ON mỗi kết nối");
     }
 

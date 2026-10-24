@@ -1,19 +1,23 @@
-use chrono::{DateTime, Duration, TimeZone, Utc};
+use chrono::{DateTime, Duration, Utc};
 use chrono_tz::Asia::Ho_Chi_Minh;
 use chrono_tz::Tz;
 
+#[allow(dead_code)]
 pub fn now_utc() -> DateTime<Utc> {
     Utc::now()
 }
 
+#[allow(dead_code)]
 pub fn now_iso_utc() -> String {
     now_utc().to_rfc3339_opts(chrono::SecondsFormat::Millis, true)
 }
 
+#[allow(dead_code)]
 pub fn to_hcm(dt: DateTime<Utc>) -> DateTime<Tz> {
     dt.with_timezone(&Ho_Chi_Minh)
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone, Copy)]
 pub enum PeriodKind {
     Week,
@@ -23,6 +27,7 @@ pub enum PeriodKind {
 
 /// Sprint 07 hoàn thiện biên tuần/tháng/năm theo Asia/Ho_Chi_Minh.
 /// Sprint 00: cửa sổ 7 ngày gần nhất.
+#[allow(dead_code)]
 pub fn boundaries_of(_kind: PeriodKind, _anchor: DateTime<Utc>) -> (DateTime<Utc>, DateTime<Utc>) {
     let now = now_utc();
     (now - Duration::days(7), now + Duration::days(1))
@@ -31,7 +36,7 @@ pub fn boundaries_of(_kind: PeriodKind, _anchor: DateTime<Utc>) -> (DateTime<Utc
 #[cfg(test)]
 mod tests {
     use super::*;
-    use chrono::Datelike;
+    use chrono::{Datelike, TimeZone};
 
     #[test]
     fn hcm_offset_is_seven_hours() {
