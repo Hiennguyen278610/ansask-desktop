@@ -2,30 +2,14 @@ import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { ArrowLeft, Edit3, Eye, EyeOff, Play, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
+import { save } from '@tauri-apps/plugin-dialog';
+import { writeTextFile } from '@tauri-apps/plugin-fs';
 import { examGet } from '@/lib/tauri/commands';
 import { useSubjects } from '@/hooks/useSubjects';
 import { QuestionCardPreview } from './QuestionCardPreview';
 import { QuizSetupDialog } from '../quiz/QuizSetupDialog';
 import { questionsToTxtString } from '../import/serialize';
 import { useUiStore } from '@/stores/uiStore';
-
-// Định nghĩa kiểu cho File System Access API để tránh dùng 'any'
-interface SaveFilePickerOptions {
-  suggestedName?: string;
-  types?: { description: string; accept: Record<string, string[]> }[];
-}
-interface FileSystemWritableFileStream extends WritableStream {
-  write(data: string): Promise<void>;
-  close(): Promise<void>;
-}
-interface FileSystemFileHandle {
-  createWritable(): Promise<FileSystemWritableFileStream>;
-}
-declare global {
-  interface Window {
-    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
-  }
-}
 
 export function ExamOverviewScreen() {
   const { subjectId, examId } = useParams();
@@ -50,35 +34,21 @@ export function ExamOverviewScreen() {
     const txtContent = questionsToTxtString(exam.questions);
     const defaultName = `${exam.title.replace(/\s+/g, '_')}.txt`;
 
-    if (window.showSaveFilePicker) {
-      try {
-        const handle = await window.showSaveFilePicker({
-          suggestedName: defaultName,
-          types: [{ description: 'Text File', accept: { 'text/plain': ['.txt'] } }],
-        });
-        const writable = await handle.createWritable();
-        await writable.write(txtContent);
-        await writable.close();
-        showToast('Đã xuất file TXT thành công!');
-        return;
-      } catch (err: unknown) {
-        if (err instanceof Error && err.name !== 'AbortError') {
-          showToast('Lỗi khi lưu file, đang dùng cách tải xuống...');
-        } else if (err instanceof Error && err.name === 'AbortError') {
-          return; // Người dùng bấm Cancel
-        }
-      }
-    }
+    try {
+      // Sử dụng Tauri Native Save Dialog
+      const filePath = await save({
+        defaultPath: defaultName,
+        filters: [{ name: 'Text File', extensions: ['txt'] }]
+      });
 
-    // Fallback
-    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = defaultName;
-    a.click();
-    URL.revokeObjectURL(url);
-    showToast('Đã xuất file TXT!');
+      if (filePath) {
+        await writeTextFile(filePath, txtContent);
+        showToast('Đã xuất file TXT thành công!');
+      }
+    } catch (err) {
+      console.error(err);
+      showToast('Lỗi khi lưu file.');
+    }
   };
 
   if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải tổng quan bộ đề...</div>;
