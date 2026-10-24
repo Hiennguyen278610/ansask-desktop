@@ -25,7 +25,7 @@ export function useExamEditor(examId?: string, subjectId?: string) {
 
   const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState<QuestionUpsertReq[]>([]);
-  const [format, setFormat] = useState<'txt' | 'json'>('json');
+  const [format, setFormat] = useState<'txt' | 'json'>('txt');
   const [rawText, setRawText] = useState('');
   const [parseError, setParseError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(!!examId);
@@ -35,7 +35,7 @@ export function useExamEditor(examId?: string, subjectId?: string) {
       examGet(examId).then(res => {
         setTitle(res.title);
         setQuestions(res.questions);
-        setRawText(questionsToJsonString(res.questions));
+        setRawText(questionsToTxtString(res.questions));
         setIsLoading(false);
       }).catch((err: Error | AppException) => {
         showToast(`Lỗi tải đề: ${err.message}`);
@@ -44,7 +44,7 @@ export function useExamEditor(examId?: string, subjectId?: string) {
     } else {
       const initial = [createEmptyQuestion()];
       setQuestions(initial);
-      setRawText(questionsToJsonString(initial));
+      setRawText(questionsToTxtString(initial));
       setIsLoading(false);
     }
   }, [examId, subjectId, navigate, showToast]);

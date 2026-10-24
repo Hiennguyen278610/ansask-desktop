@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { Plus, BookOpen, ChevronRight } from 'lucide-react';
+import { Plus, BookOpen, ChevronRight, Upload } from 'lucide-react';
 import { BreadcrumbHeader } from '@/components/layout/BreadcrumbHeader';
 import { ExamCard } from './ExamCard';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
@@ -34,9 +34,14 @@ export function ExamListScreen() {
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subjectColor }} />
           {subject?.name || 'Đang tải...'}
         </span>
-        <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="ml-auto neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Tạo bộ đề
-        </button>
+        <div className="ml-auto flex items-center gap-2">
+          <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10">
+            <Upload className="w-4 h-4" /> Nhập bộ đề
+          </button>
+          <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Tạo bộ đề
+          </button>
+        </div>
       </BreadcrumbHeader>
 
       {isLoading && (

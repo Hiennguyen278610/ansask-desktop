@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useSearchParams } from 'react-router';
 import { quizStart, attemptSubmit, type QuizQuestionDto } from '@/lib/tauri/commands';
 import { useUiStore } from '@/stores/uiStore';
 import { AppException } from '@/lib/tauri/invoke';
 
 export function useQuiz(examId?: string) {
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const qc = useQueryClient();
   const showToast = useUiStore(s => s.showToast);
@@ -19,7 +21,11 @@ export function useQuiz(examId?: string) {
 
   useEffect(() => {
     if (!examId) return;
-    quizStart(examId).then(res => {
+    const countStr = searchParams.get('count');
+    const randomizeStr = searchParams.get('randomize');
+    const count = countStr ? parseInt(countStr, 10) : undefined;
+    const randomize = randomizeStr ? randomizeStr === 'true' : undefined;
+    quizStart(examId, count, randomize).then(res => {
       setQuestions(res.questions);
       setStartTime(Date.now());
       setIsLoading(false);

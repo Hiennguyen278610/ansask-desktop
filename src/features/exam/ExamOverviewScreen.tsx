@@ -1,14 +1,18 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit3, Eye, EyeOff, Play, BookOpen } from 'lucide-react';
+import { ArrowLeft, Edit3, Eye, EyeOff, Play, BookOpen, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { examGet } from '@/lib/tauri/commands';
 import { useSubjects } from '@/hooks/useSubjects';
 import { QuestionCardPreview } from './QuestionCardPreview';
+import { QuizSetupDialog } from '../quiz/QuizSetupDialog';
+import { questionsToTxtString } from '../import/serialize';
+import { useUiStore } from '@/stores/uiStore';
 
 export function ExamOverviewScreen() {
   const { subjectId, examId } = useParams();
   const navigate = useNavigate();
+  const showToast = useUiStore(s => s.showToast);
   
   const { data: subjects } = useSubjects();
   const { data: exam, isLoading, isError } = useQuery({
@@ -18,9 +22,23 @@ export function ExamOverviewScreen() {
   });
 
   const [showAnswers, setShowAnswers] = useState(false);
+  const [showQuizConfig, setShowQuizConfig] = useState(false);
 
   const subject = subjects?.find(s => s.id === subjectId);
   const subjectColor = subject?.color || 'var(--ink-800)';
+
+  const handleExportTxt = () => {
+    if (!exam) return;
+    const txtContent = questionsToTxtString(exam.questions);
+    const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${exam.title.replace(/\s+/g, '_')}.txt`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Đã xuất file TXT!');
+  };
 
   if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải tổng quan bộ đề...</div>;
   if (isError || !exam) return <div className="p-8 text-center text-sm text-rose-500">Không tìm thấy bộ đề này.</div>;
@@ -59,6 +77,15 @@ export function ExamOverviewScreen() {
           </button>
 
           <button
+            onClick={handleExportTxt}
+            className="neu-pill px-4 py-2.5 rounded-2xl text-xs font-bold text-ink-strong flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10"
+            title="Tải xuống file TXT"
+          >
+            <Download className="w-4 h-4" />
+            <span>Xuất TXT</span>
+          </button>
+
+          <button
             onClick={() => navigate(`/subjects/${subjectId}/exams/${examId}/edit`)}
             className="neu-pill px-4 py-2.5 rounded-2xl text-xs font-bold text-ink-strong flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10"
           >
@@ -67,7 +94,7 @@ export function ExamOverviewScreen() {
           </button>
 
           <button
-            onClick={() => navigate(`/subjects/${subjectId}/exams/${examId}/quiz`)}
+            onClick={() => setShowQuizConfig(true)}
             className="neu-dark-btn px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2"
           >
             <Play className="w-4 h-4 fill-current" />
@@ -91,6 +118,19 @@ export function ExamOverviewScreen() {
           </div>
         )}
       </div>
+
+      <QuizSetupDialog 
+        open={showQuizConfig} 
+        examId={exam.title} 
+        maxQuestions={exam.questions.length}
+        onClose={() => setShowQuizConfig(false)}
+        onStart={(count, randomize) => {
+          setShowQuizConfig(false);
+          // Gắn state tạm thời qua URL params hoặc sessionStorage nếu cần, 
+          // nhưng đơn giản nhất là truyền qua query string để Hook useQuiz nhận diện
+          navigate(`/subjects/${subjectId}/exams/${examId}/quiz?count=${count}&randomize=${randomize}`);
+        }}
+      />
     </div>
   );
 }
