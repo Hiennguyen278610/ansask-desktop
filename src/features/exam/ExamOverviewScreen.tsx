@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Edit3, Eye, EyeOff, Play, BookOpen, Download } from 'lucide-react';
+import { ArrowLeft, Edit3, Eye, EyeOff, Play, Download } from 'lucide-react';
 import { useQuery } from '@tanstack/react-query';
 import { examGet } from '@/lib/tauri/commands';
 import { useSubjects } from '@/hooks/useSubjects';
@@ -8,6 +8,24 @@ import { QuestionCardPreview } from './QuestionCardPreview';
 import { QuizSetupDialog } from '../quiz/QuizSetupDialog';
 import { questionsToTxtString } from '../import/serialize';
 import { useUiStore } from '@/stores/uiStore';
+
+// Định nghĩa kiểu cho File System Access API để tránh dùng 'any'
+interface SaveFilePickerOptions {
+  suggestedName?: string;
+  types?: { description: string; accept: Record<string, string[]> }[];
+}
+interface FileSystemWritableFileStream extends WritableStream {
+  write(data: string): Promise<void>;
+  close(): Promise<void>;
+}
+interface FileSystemFileHandle {
+  createWritable(): Promise<FileSystemWritableFileStream>;
+}
+declare global {
+  interface Window {
+    showSaveFilePicker?: (options?: SaveFilePickerOptions) => Promise<FileSystemFileHandle>;
+  }
+}
 
 export function ExamOverviewScreen() {
   const { subjectId, examId } = useParams();
@@ -32,10 +50,9 @@ export function ExamOverviewScreen() {
     const txtContent = questionsToTxtString(exam.questions);
     const defaultName = `${exam.title.replace(/\s+/g, '_')}.txt`;
 
-    // Thử dùng File System Access API (Native Save Dialog)
-    if ('showSaveFilePicker' in window) {
+    if (window.showSaveFilePicker) {
       try {
-        const handle = await (window as any).showSaveFilePicker({
+        const handle = await window.showSaveFilePicker({
           suggestedName: defaultName,
           types: [{ description: 'Text File', accept: { 'text/plain': ['.txt'] } }],
         });
@@ -44,16 +61,16 @@ export function ExamOverviewScreen() {
         await writable.close();
         showToast('Đã xuất file TXT thành công!');
         return;
-      } catch (err: any) {
-        if (err.name !== 'AbortError') {
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name !== 'AbortError') {
           showToast('Lỗi khi lưu file, đang dùng cách tải xuống...');
-        } else {
+        } else if (err instanceof Error && err.name === 'AbortError') {
           return; // Người dùng bấm Cancel
         }
       }
     }
 
-    // Fallback cho Webview không hỗ trợ
+    // Fallback
     const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -69,7 +86,6 @@ export function ExamOverviewScreen() {
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* Header */}
       <div className="neu-card rounded-[26px] p-6 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
         <div className="space-y-2">
           <div className="flex items-center gap-2.5 flex-wrap">
@@ -86,7 +102,6 @@ export function ExamOverviewScreen() {
           <h2 className="text-lg sm:text-xl font-bold text-ink-strong">{exam.title}</h2>
         </div>
 
-        {/* Actions */}
         <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={() => setShowAnswers(prev => !prev)}
@@ -123,7 +138,6 @@ export function ExamOverviewScreen() {
         </div>
       </div>
 
-      {/* Questions List */}
       <div className="space-y-4">
         {exam.questions.map((q, idx) => (
           <QuestionCardPreview key={q.id || idx} index={idx} question={q} showAnswer={showAnswers} />
