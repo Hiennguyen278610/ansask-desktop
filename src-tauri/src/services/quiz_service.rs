@@ -16,10 +16,27 @@ pub fn start_quiz(pool: &DbPool, req: QuizStartReq) -> Result<QuizStartRes, AppE
     }
 
     let randomize = req.randomize.unwrap_or(true);
-    let req_count = req.count.unwrap_or(exam.questions.len());
-    let n = std::cmp::min(req_count, exam.questions.len()).clamp(1, 200);
+    let include_answers = req.include_answers.unwrap_or(false);
 
-    let mut pool_qs = exam.questions;
+    // Lọc theo danh sách câu hỏi (Practice Mode)
+    let mut pool_qs = if let Some(ids) = req.question_ids {
+        exam.questions
+            .into_iter()
+            .filter(|q| ids.contains(&q.id))
+            .collect::<Vec<_>>()
+    } else {
+        exam.questions
+    };
+
+    if pool_qs.is_empty() {
+        return Err(AppError::Internal(
+            "Không có câu hỏi nào hợp lệ để tạo bài.".into(),
+        ));
+    }
+
+    let req_count = req.count.unwrap_or(pool_qs.len());
+    let n = std::cmp::min(req_count, pool_qs.len()).clamp(1, 200);
+
     let mut rng = rand::rng();
 
     if randomize {
@@ -35,13 +52,12 @@ pub fn start_quiz(pool: &DbPool, req: QuizStartReq) -> Result<QuizStartRes, AppE
         }
         let option_order: Vec<String> = opts.iter().map(|o| o.id.clone()).collect();
 
-        // Ẩn đáp án đúng
         let options_dto: Vec<OptionDto> = opts
             .into_iter()
             .map(|o| OptionDto {
                 id: o.id,
                 text: o.text,
-                is_correct: false,
+                is_correct: if include_answers { o.is_correct } else { false }, // Trả đáp án nếu là Stream Mode
             })
             .collect();
 

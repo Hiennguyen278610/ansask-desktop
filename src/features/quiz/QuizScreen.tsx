@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams } from 'react-router';
-import { Clock, List, CheckCircle2 } from 'lucide-react';
+import { Clock, List, CheckCircle2, ChevronRight, XCircle } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { QuizQuestionCard } from './QuizQuestionCard';
 import { SubmitWarningDialog } from './SubmitWarningDialog';
@@ -20,8 +20,12 @@ export function QuizScreen() {
   const unansweredIndexes = quiz.questions.map((q, i) => ({ q, i })).filter(({ q }) => !(quiz.answers[q.id]?.length > 0)).map(({ i }) => i);
 
   const handleJump = (idx: number) => {
-    const qId = quiz.questions[idx].id;
-    questionRefs.current[qId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    if (quiz.mode === 'stream') {
+      quiz.setCurrentIdx(idx);
+    } else {
+      const qId = quiz.questions[idx].id;
+      questionRefs.current[qId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
   };
 
   const handleSubmit = () => {
@@ -29,9 +33,79 @@ export function QuizScreen() {
     else quiz.submit();
   };
 
+  // --- GIAO DIỆN STREAM MODE (FLASHCARD) ---
+  if (quiz.mode === 'stream') {
+    const q = quiz.questions[quiz.currentIdx];
+    const isChecked = quiz.checkedAnswers[q.id];
+    const isCorrect = isChecked === true;
+    
+    // Check xem đã chọn đáp án chưa
+    const hasSelected = (quiz.answers[q.id] || []).length > 0;
+    const isMultiChoice = q.options.length > 4;
+
+    return (
+      <div className="space-y-6 animate-fade-in relative pb-20 max-w-3xl mx-auto h-full flex flex-col">
+        <div className="neu-card rounded-2xl p-4 flex items-center justify-between gap-4 shrink-0">
+          <div className="flex items-center gap-4">
+            <div className="neu-pill px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-ink-strong">
+              <Clock className="w-4 h-4 text-slate-500" />
+              <span>{String(Math.floor(quiz.elapsedSec / 60)).padStart(2, '0')}:{String(quiz.elapsedSec % 60).padStart(2, '0')}</span>
+            </div>
+            <p className="text-xs font-bold text-ink-strong">Câu {quiz.currentIdx + 1} / {total}</p>
+          </div>
+          <button onClick={() => setShowNav(true)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+            <List className="w-4 h-4" /> Danh sách
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar pb-4">
+          <QuizQuestionCard
+            index={quiz.currentIdx}
+            question={q}
+            selectedOptionIds={quiz.answers[q.id] || []}
+            onToggle={(optId, isMulti) => quiz.toggleAnswer(q.id, optId, isMulti)}
+          />
+        </div>
+
+        <div className="neu-card rounded-2xl p-4 flex justify-between items-center shrink-0">
+          <div>
+            {isChecked && isCorrect && <span className="text-emerald-500 font-bold flex items-center gap-1"><CheckCircle2 className="w-4 h-4"/> Chính xác!</span>}
+            {isChecked && !isCorrect && <span className="text-rose-500 font-bold flex items-center gap-1"><XCircle className="w-4 h-4"/> Sai rồi, hãy thử lại!</span>}
+          </div>
+          <div className="flex gap-2">
+            {!isChecked ? (
+              <button onClick={() => quiz.checkStreamAnswer(q.id)} disabled={!hasSelected} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold disabled:opacity-50">
+                Xác nhận
+              </button>
+            ) : isCorrect ? (
+              <button 
+                onClick={() => {
+                  if (quiz.currentIdx < total - 1) quiz.setCurrentIdx(prev => prev + 1);
+                  else {
+                    // Nếu là câu cuối, tự động nộp bài
+                    quiz.submit();
+                  }
+                }} 
+                className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2"
+              >
+                {quiz.currentIdx < total - 1 ? 'Câu tiếp theo' : 'Hoàn thành'} <ChevronRight className="w-4 h-4"/>
+              </button>
+            ) : (
+              <button onClick={() => quiz.retryStreamAnswer(q.id)} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold">
+                Thử lại
+              </button>
+            )}
+          </div>
+        </div>
+
+        <QuestionNavigatorDialog open={showNav} questions={quiz.questions} answers={quiz.answers} onSelect={handleJump} onClose={() => setShowNav(false)} />
+      </div>
+    );
+  }
+
+  // --- GIAO DIỆN THI THƯỜNG (NORMAL MODE) ---
   return (
     <div className="space-y-6 animate-fade-in relative pb-20">
-      {/* Sticky Bar (Đã bỏ nút Danh sách câu) */}
       <div className="neu-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 sticky top-2 z-20">
         <div className="flex items-center gap-4">
           <div className="neu-pill px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-ink-strong">
@@ -52,7 +126,6 @@ export function QuizScreen() {
         </div>
       </div>
 
-      {/* Questions */}
       <div className="space-y-4 max-w-4xl mx-auto">
         {quiz.questions.map((q, i) => (
           <div key={q.id} ref={el => { if (el) questionRefs.current[q.id] = el; }}>
@@ -66,18 +139,12 @@ export function QuizScreen() {
         ))}
       </div>
 
-      {/* Nút nổi (FAB) */}
-      <button
-        onClick={() => setShowNav(true)}
-        className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]"
-      >
-        <List className="w-5 h-5" />
-        <span className="hidden sm:inline">Danh sách câu</span>
-        <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{answeredCount}/{total}</span>
+      <button onClick={() => setShowNav(true)} className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]">
+        <List className="w-5 h-5" /><span className="hidden sm:inline">Danh sách</span><span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{answeredCount}/{total}</span>
       </button>
 
       <QuestionNavigatorDialog open={showNav} questions={quiz.questions} answers={quiz.answers} onSelect={handleJump} onClose={() => setShowNav(false)} />
-      <SubmitWarningDialog open={showWarning} unansweredIndexes={unansweredIndexes} total={total} onBack={() => setShowWarning(false)} onConfirm={quiz.submit} />
+      <SubmitWarningDialog open={showWarning} unansweredIndexes={unansweredIndexes} total={total} onBack={() => setShowWarning(false)} onConfirm={() => quiz.submit()} />
     </div>
   );
 }

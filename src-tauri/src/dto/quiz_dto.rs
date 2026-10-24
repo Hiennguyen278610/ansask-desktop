@@ -7,6 +7,8 @@ pub struct QuizStartReq {
     pub exam_id: String,
     pub count: Option<usize>,
     pub randomize: Option<bool>,
+    pub question_ids: Option<Vec<String>>, // Dùng cho Practice Mode
+    pub include_answers: Option<bool>,     // Dùng cho Stream Mode
 }
 
 #[derive(Debug, Serialize)]
@@ -14,7 +16,7 @@ pub struct QuizStartReq {
 pub struct QuizQuestionDto {
     pub id: String,
     pub ask: String,
-    pub options: Vec<OptionDto>, // OptionDto đã ẩn is_correct
+    pub options: Vec<OptionDto>,
     pub option_order: Vec<String>,
 }
 

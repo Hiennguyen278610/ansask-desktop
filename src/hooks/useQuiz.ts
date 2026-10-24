@@ -1,7 +1,6 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router';
+import { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useSearchParams } from 'react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import { useSearchParams } from 'react-router';
 import { quizStart, attemptSubmit, type QuizQuestionDto } from '@/lib/tauri/commands';
 import { useUiStore } from '@/stores/uiStore';
 import { AppException } from '@/lib/tauri/invoke';
@@ -18,14 +17,29 @@ export function useQuiz(examId?: string) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [startTime, setStartTime] = useState<number>(0);
+  
+  // State cho Stream Mode
+  const [mode, setMode] = useState<'normal' | 'stream'>('normal');
+  const [currentIdx, setCurrentIdx] = useState(0);
+  const [checkedAnswers, setCheckedAnswers] = useState<Record<string, boolean>>({});
+  const [failedQuestions, setFailedQuestions] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     if (!examId) return;
+    
     const countStr = searchParams.get('count');
     const randomizeStr = searchParams.get('randomize');
+    const modeStr = searchParams.get('mode') as 'normal' | 'stream' | null;
+    const idsStr = searchParams.get('ids'); // Dùng cho practice mode
+
     const count = countStr ? parseInt(countStr, 10) : undefined;
     const randomize = randomizeStr ? randomizeStr === 'true' : undefined;
-    quizStart(examId, count, randomize).then(res => {
+    const questionIds = idsStr ? idsStr.split(',') : undefined;
+    const includeAnswers = modeStr === 'stream';
+
+    setMode(modeStr || 'normal');
+
+    quizStart(examId, count, randomize, questionIds, includeAnswers).then(res => {
       setQuestions(res.questions);
       setStartTime(Date.now());
       setIsLoading(false);
@@ -42,6 +56,7 @@ export function useQuiz(examId?: string) {
   }, [isLoading, startTime]);
 
   const toggleAnswer = (qId: string, optId: string, isMulti: boolean) => {
+    if (mode === 'stream' && checkedAnswers[qId]) return; // Không cho đổi đáp án khi đã check đúng
     setAnswers(prev => {
       const current = prev[qId] || [];
       if (isMulti) {
@@ -53,18 +68,50 @@ export function useQuiz(examId?: string) {
     });
   };
 
-  const submit = async () => {
+  const checkStreamAnswer = (qId: string) => {
+    const q = questions.find(x => x.id === qId);
+    if (!q) return;
+    const selected = answers[qId] || [];
+    if (selected.length === 0) return showToast('Vui lòng chọn đáp án!');
+    
+    const correctIds = q.options.filter(o => o.is_correct).map(o => o.id).sort();
+    const selIds = [...selected].sort();
+    
+    const isCorrect = JSON.stringify(correctIds) === JSON.stringify(selIds);
+    if (!isCorrect) {
+      setFailedQuestions(prev => new Set(prev).add(qId));
+    }
+    setCheckedAnswers(prev => ({ ...prev, [qId]: isCorrect }));
+  };
+
+  const retryStreamAnswer = (qId: string) => {
+    setCheckedAnswers(prev => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+    setAnswers(prev => {
+      const next = { ...prev };
+      delete next[qId];
+      return next;
+    });
+  };
+
+  const submit = useCallback(async (overrideQuestions?: QuizQuestionDto[], overrideAnswers?: Record<string, string[]>) => {
     if (!examId) return;
     setIsSubmitting(true);
     try {
+      const qsToSubmit = overrideQuestions || questions;
+      const ansToSubmit = overrideAnswers || answers;
+
       const req = {
         examId,
         startedAt: new Date(startTime).toISOString(),
-        answers: questions.map((q, idx) => ({
+        answers: qsToSubmit.map((q, idx) => ({
           questionId: q.id,
-          selectedOptionIds: answers[q.id] || [],
+          selectedOptionIds: ansToSubmit[q.id] || [],
           position: idx,
-          optionOrder: q.optionOrder,
+          optionOrder: q.option_order,
         }))
       };
       const res = await attemptSubmit(req);
@@ -76,7 +123,10 @@ export function useQuiz(examId?: string) {
     } finally {
       setIsSubmitting(false);
     }
-  };
+  }, [examId, questions, answers, startTime, showToast, qc, navigate]);
 
-  return { questions, answers, elapsedSec, isLoading, isSubmitting, toggleAnswer, submit };
+  return { 
+    questions, answers, elapsedSec, isLoading, isSubmitting, toggleAnswer, submit,
+    mode, currentIdx, setCurrentIdx, checkedAnswers, failedQuestions, checkStreamAnswer, retryStreamAnswer
+  };
 }

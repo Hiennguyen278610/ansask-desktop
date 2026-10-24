@@ -55,7 +55,7 @@ export function examDelete(id: string): Promise<void> { return invoke('exam_dele
 
 export function importParse(format: 'txt' | 'json', raw: string): Promise<ParsedExamDto> { return invoke('import_parse', { req: { format, raw } }); }
 
-export function quizStart(examId: string, count?: number, randomize = true): Promise<QuizStartRes> { return invoke('quiz_start', { req: { examId, count, randomize } }); }
+export function quizStart(examId: string, count?: number, randomize = true, questionIds?: string[], includeAnswers = false): Promise<QuizStartRes> { return invoke('quiz_start', { req: { examId, count, randomize, questionIds, includeAnswers } }); }
 export function attemptSubmit(req: AttemptSubmitReq): Promise<AttemptResultDto> { return invoke('attempt_submit', { req }); }
 export function attemptList(examId: string): Promise<AttemptSummary[]> { return invoke('attempt_list', { req: { examId } }); }
 export function attemptListAll(): Promise<AttemptSummary[]> { return invoke('attempt_list_all'); }
