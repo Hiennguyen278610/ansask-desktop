@@ -16,7 +16,11 @@
   --color-border-strong: var(--border-strong);
 }
 
-html, body, #root { height: 100%; }
+html, body, #root {
+  height: 100%;
+  overflow: hidden; /* Cấm scroll toàn cục */
+}
+
 body {
   font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   background: var(--app-bg);

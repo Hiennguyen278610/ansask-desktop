@@ -27,6 +27,15 @@ export function ExamListScreen() {
   const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const isTxt = file.name.endsWith('.txt');
+    const isJson = file.name.endsWith('.json');
+    if (!isTxt && !isJson) {
+      showToast('Lỗi: Chỉ chấp nhận file .txt hoặc .json!');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;

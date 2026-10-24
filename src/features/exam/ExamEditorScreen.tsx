@@ -18,11 +18,9 @@ export function ExamEditorScreen() {
   const questionRefs = useRef<Record<string, HTMLDivElement>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Xử lý nếu có file được truyền từ màn hình danh sách
   useEffect(() => {
     if (location.state?.importText) {
       ed.handleRawChange(location.state.importText);
-      // Xoá state để tránh load lại khi F5
       window.history.replaceState({}, document.title);
     }
   }, [location.state, ed]);
@@ -39,22 +37,30 @@ export function ExamEditorScreen() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // Validate định dạng: chỉ nhận .txt hoặc .json
+    const isTxt = file.name.endsWith('.txt');
+    const isJson = file.name.endsWith('.json');
+    
+    if (!isTxt && !isJson) {
+      showToast('Lỗi: Chỉ chấp nhận file .txt hoặc .json!');
+      e.target.value = '';
+      return;
+    }
+
     const reader = new FileReader();
     reader.onload = (event) => {
       const content = event.target?.result as string;
       ed.handleRawChange(content);
-      // Tự động chuyển tab dựa vào đuôi file
-      const isJson = file.name.endsWith('.json');
       ed.handleSwitchFormat(isJson ? 'json' : 'txt');
       showToast(`Đã tải nội dung từ ${file.name}`);
     };
     reader.readAsText(file);
-    e.target.value = ''; // Reset input
+    e.target.value = '';
   };
 
   return (
-    // Cấu trúc Flexbox chuẩn: h-full và min-h-0 để không bị tràn
-    <div className="flex flex-col flex-1 h-full min-h-0 animate-fade-in relative">
+    <div className="flex flex-col h-full min-h-0 relative">
       {/* Header */}
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 mb-5">
         <div className="flex-1 flex items-center gap-3">
@@ -70,7 +76,6 @@ export function ExamEditorScreen() {
           />
         </div>
         <div className="flex items-center gap-2.5 justify-end">
-          {/* Nút Import File */}
           <input type="file" accept=".txt,.json" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
           <button onClick={() => fileInputRef.current?.click()} className="neu-pill px-3 py-2 rounded-xl text-xs font-bold text-ink flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10" title="Nhập từ file">
             <Upload className="w-4 h-4" /> Nhập File
@@ -141,7 +146,6 @@ export function ExamEditorScreen() {
             </div>
           )}
 
-          {/* Vùng Textarea chiếm toàn bộ không gian còn lại */}
           <div className="flex-1 min-h-0 relative flex flex-col">
             {ed.format === 'txt' ? (
                <SyntaxHighlightedTextarea value={ed.rawText} onChange={ed.handleRawChange} />
@@ -157,7 +161,6 @@ export function ExamEditorScreen() {
         </div>
       </div>
 
-      {/* Nút nổi (FAB) */}
       <button
         onClick={() => setShowNav(true)}
         className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]"
