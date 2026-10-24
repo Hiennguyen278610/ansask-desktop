@@ -9,11 +9,9 @@ mod services;
 mod state;
 mod utils;
 
-use std::fs;
-
-use tauri::Manager;
-
 use state::AppState;
+use std::fs;
+use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
@@ -50,6 +48,14 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::settings_cmds::setting_get,
             commands::settings_cmds::setting_set,
+            commands::subject_cmds::subject_list,
+            commands::subject_cmds::subject_create,
+            commands::subject_cmds::subject_update,
+            commands::subject_cmds::subject_delete,
+            commands::exam_cmds::exam_list,
+            commands::exam_cmds::exam_get,
+            commands::exam_cmds::exam_save,
+            commands::exam_cmds::exam_delete,
         ])
         .run(tauri::generate_context!())
         .expect("Lỗi khi chạy Tauri");

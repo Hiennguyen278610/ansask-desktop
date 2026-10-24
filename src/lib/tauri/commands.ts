@@ -1,15 +1,6 @@
-/**
- * Mirror DTO type từ Rust — structure-be.md §6.3 (đồng bộ thủ công).
- * Sprint 00 chỉ khai báo command cần cho hạ tầng (setting) + subject list/create stub.
- */
 import { invoke } from './invoke';
 
-// ---------- Shared types ----------
-export interface SettingValueDto {
-  key: string;
-  value: string;
-}
-
+export interface SettingValueDto { key: string; value: string; }
 export interface SubjectSummary {
   id: string;
   name: string;
@@ -18,14 +9,40 @@ export interface SubjectSummary {
   examCount: number;
   questionCount: number;
 }
-
-// ---------- Commands ----------
-export function settingGet(key: string): Promise<SettingValueDto> {
-  return invoke<SettingValueDto>('setting_get', { req: { key } });
+export interface ExamSummary {
+  id: string;
+  subjectId: string;
+  title: string;
+  createdAt: string;
+  attemptCount: number;
+  questionCount: number;
+}
+export interface OptionDto { id: string; text: string; isCorrect: boolean; }
+export interface QuestionDto { id: string; ask: string; options: OptionDto[]; }
+export interface ExamDetail {
+  id: string;
+  subjectId: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  questions: QuestionDto[];
+}
+export interface ExamSaveReq {
+  id?: string;
+  subjectId: string;
+  title: string;
+  questions: { ask: string; options: { text: string; isCorrect: boolean }[] }[];
 }
 
-export function settingSet(key: string, value: string): Promise<SettingValueDto> {
-  return invoke<SettingValueDto>('setting_set', { req: { key, value } });
-}
+export function settingGet(key: string): Promise<SettingValueDto> { return invoke('setting_get', { req: { key } }); }
+export function settingSet(key: string, value: string): Promise<SettingValueDto> { return invoke('setting_set', { req: { key, value } }); }
 
-// Sprint 01 sẽ thêm: subject_list, subject_create, subject_update, subject_delete, exam_*.
+export function subjectList(): Promise<SubjectSummary[]> { return invoke('subject_list'); }
+export function subjectCreate(name: string, color: string): Promise<SubjectSummary> { return invoke('subject_create', { req: { name, color } }); }
+export function subjectUpdate(id: string, name: string, color: string): Promise<void> { return invoke('subject_update', { req: { id, name, color } }); }
+export function subjectDelete(id: string): Promise<void> { return invoke('subject_delete', { req: { id } }); }
+
+export function examList(subjectId: string): Promise<ExamSummary[]> { return invoke('exam_list', { req: { subjectId } }); }
+export function examGet(id: string): Promise<ExamDetail> { return invoke('exam_get', { req: { id } }); }
+export function examSave(req: ExamSaveReq): Promise<string> { return invoke('exam_save', { req }); }
+export function examDelete(id: string): Promise<void> { return invoke('exam_delete', { req: { id } }); }

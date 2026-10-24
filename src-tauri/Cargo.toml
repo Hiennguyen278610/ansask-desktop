@@ -32,3 +32,4 @@ chrono-tz = "0.10"
 rand = "0.9"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+unicode-normalization = "0.1.26"
