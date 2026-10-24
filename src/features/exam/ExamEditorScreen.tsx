@@ -1,17 +1,31 @@
-import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Save, Plus, List } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useParams, useNavigate, useLocation } from 'react-router';
+import { ArrowLeft, Save, Plus, List, Upload } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { useExamEditor } from '@/hooks/useExamEditor';
 import { QuestionCardEditor } from './QuestionCardEditor';
 import { SyntaxHighlightedTextarea } from './SyntaxHighlightedTextarea';
 import { QuestionNavigatorDialog } from '@/features/quiz/QuestionNavigatorDialog';
+import { useUiStore } from '@/stores/uiStore';
 
 export function ExamEditorScreen() {
   const { subjectId, examId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
+  const showToast = useUiStore(s => s.showToast);
+
   const ed = useExamEditor(examId, subjectId);
   const [showNav, setShowNav] = useState(false);
   const questionRefs = useRef<Record<string, HTMLDivElement>>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Xử lý nếu có file được truyền từ màn hình danh sách
+  useEffect(() => {
+    if (location.state?.importText) {
+      ed.handleRawChange(location.state.importText);
+      // Xoá state để tránh load lại khi F5
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state, ed]);
 
   if (ed.isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải đề...</div>;
 
@@ -22,9 +36,26 @@ export function ExamEditorScreen() {
 
   const navQuestions = ed.questions.map((q, i) => ({ id: `q-idx-${i}`, ask: q.ask }));
 
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      ed.handleRawChange(content);
+      // Tự động chuyển tab dựa vào đuôi file
+      const isJson = file.name.endsWith('.json');
+      ed.handleSwitchFormat(isJson ? 'json' : 'txt');
+      showToast(`Đã tải nội dung từ ${file.name}`);
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // Reset input
+  };
+
   return (
-    <div className="flex-1 flex flex-col animate-fade-in relative min-h-0 h-full">
-      {/* Header (cố định) */}
+    // Cấu trúc Flexbox chuẩn: h-full và min-h-0 để không bị tràn
+    <div className="flex flex-col flex-1 h-full min-h-0 animate-fade-in relative">
+      {/* Header */}
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 mb-5">
         <div className="flex-1 flex items-center gap-3">
           <button onClick={() => navigate(`/subjects/${subjectId}/exams`)} className="neu-icon-btn w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
@@ -39,6 +70,12 @@ export function ExamEditorScreen() {
           />
         </div>
         <div className="flex items-center gap-2.5 justify-end">
+          {/* Nút Import File */}
+          <input type="file" accept=".txt,.json" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
+          <button onClick={() => fileInputRef.current?.click()} className="neu-pill px-3 py-2 rounded-xl text-xs font-bold text-ink flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10" title="Nhập từ file">
+            <Upload className="w-4 h-4" /> Nhập File
+          </button>
+          
           <span className="neu-pill px-3 py-2 rounded-xl text-xs font-bold text-slate-500">{ed.questions.length} câu</span>
           <button onClick={ed.save} className="neu-dark-btn px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2">
             <Save className="w-4 h-4" /> Lưu bộ đề
@@ -46,7 +83,7 @@ export function ExamEditorScreen() {
         </div>
       </div>
 
-      {/* Split Pane (chiếm toàn bộ không gian còn lại) */}
+      {/* Split Pane */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
         {/* Cột trái: Render */}
         <div className="neu-card rounded-[26px] p-5 flex flex-col h-full min-h-0">
@@ -54,8 +91,7 @@ export function ExamEditorScreen() {
             <h3 className="font-bold text-sm text-ink-strong">Render • Trực quan</h3>
             <span className="text-[11px] text-slate-400">Cuộn để xem thêm</span>
           </div>
-          {/* Vùng cuộn độc lập */}
-          <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto pr-2 space-y-1 custom-scrollbar min-h-0">
             {ed.questions.map((q, i) => (
               <div key={i} className="py-1" ref={el => { if (el) questionRefs.current[`q-idx-${i}`] = el; }}>
                 <QuestionCardEditor
@@ -105,8 +141,8 @@ export function ExamEditorScreen() {
             </div>
           )}
 
-          {/* Vùng textarea tự co giãn bên trong */}
-          <div className="flex-1 min-h-0 relative">
+          {/* Vùng Textarea chiếm toàn bộ không gian còn lại */}
+          <div className="flex-1 min-h-0 relative flex flex-col">
             {ed.format === 'txt' ? (
                <SyntaxHighlightedTextarea value={ed.rawText} onChange={ed.handleRawChange} />
             ) : (
@@ -114,7 +150,7 @@ export function ExamEditorScreen() {
                 value={ed.rawText}
                 onChange={(e) => ed.handleRawChange(e.target.value)}
                 spellCheck={false}
-                className="absolute inset-0 w-full h-full p-4 rounded-2xl neu-card-inset font-mono text-xs sm:text-sm leading-relaxed text-ink focus:outline-none resize-none custom-scrollbar"
+                className="w-full h-full p-4 rounded-2xl neu-card-inset font-mono text-xs sm:text-sm leading-relaxed text-ink focus:outline-none resize-none custom-scrollbar"
               />
             )}
           </div>
@@ -128,7 +164,7 @@ export function ExamEditorScreen() {
       >
         <List className="w-5 h-5" />
         <span className="hidden sm:inline">Danh sách câu</span>
-        <span className="bg-ink-strong text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{ed.questions.length}</span>
+        <span className="bg-ink-strong text-app text-[10px] px-2 py-0.5 rounded-full ml-1">{ed.questions.length}</span>
       </button>
 
       <QuestionNavigatorDialog open={showNav} questions={navQuestions} onSelect={handleJump} onClose={() => setShowNav(false)} />

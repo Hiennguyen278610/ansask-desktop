@@ -27,14 +27,38 @@ export function ExamOverviewScreen() {
   const subject = subjects?.find(s => s.id === subjectId);
   const subjectColor = subject?.color || 'var(--ink-800)';
 
-  const handleExportTxt = () => {
+  const handleExportTxt = async () => {
     if (!exam) return;
     const txtContent = questionsToTxtString(exam.questions);
+    const defaultName = `${exam.title.replace(/\s+/g, '_')}.txt`;
+
+    // Thử dùng File System Access API (Native Save Dialog)
+    if ('showSaveFilePicker' in window) {
+      try {
+        const handle = await (window as any).showSaveFilePicker({
+          suggestedName: defaultName,
+          types: [{ description: 'Text File', accept: { 'text/plain': ['.txt'] } }],
+        });
+        const writable = await handle.createWritable();
+        await writable.write(txtContent);
+        await writable.close();
+        showToast('Đã xuất file TXT thành công!');
+        return;
+      } catch (err: any) {
+        if (err.name !== 'AbortError') {
+          showToast('Lỗi khi lưu file, đang dùng cách tải xuống...');
+        } else {
+          return; // Người dùng bấm Cancel
+        }
+      }
+    }
+
+    // Fallback cho Webview không hỗ trợ
     const blob = new Blob([txtContent], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `${exam.title.replace(/\s+/g, '_')}.txt`;
+    a.download = defaultName;
     a.click();
     URL.revokeObjectURL(url);
     showToast('Đã xuất file TXT!');
@@ -60,7 +84,6 @@ export function ExamOverviewScreen() {
             </span>
           </div>
           <h2 className="text-lg sm:text-xl font-bold text-ink-strong">{exam.title}</h2>
-          <p className="text-xs text-slate-400">Mặc định đáp án được ẩn để bạn tự ôn tập. Bật công tắc "Hiện đáp án" nếu muốn tra cứu nhanh.</p>
         </div>
 
         {/* Actions */}
@@ -79,26 +102,23 @@ export function ExamOverviewScreen() {
           <button
             onClick={handleExportTxt}
             className="neu-pill px-4 py-2.5 rounded-2xl text-xs font-bold text-ink-strong flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10"
-            title="Tải xuống file TXT"
+            title="Xuất ra file TXT"
           >
-            <Download className="w-4 h-4" />
-            <span>Xuất TXT</span>
+            <Download className="w-4 h-4" /> Xuất TXT
           </button>
 
           <button
             onClick={() => navigate(`/subjects/${subjectId}/exams/${examId}/edit`)}
             className="neu-pill px-4 py-2.5 rounded-2xl text-xs font-bold text-ink-strong flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10"
           >
-            <Edit3 className="w-4 h-4" />
-            <span>Sửa đề</span>
+            <Edit3 className="w-4 h-4" /> Sửa đề
           </button>
 
           <button
             onClick={() => setShowQuizConfig(true)}
             className="neu-dark-btn px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2"
           >
-            <Play className="w-4 h-4 fill-current" />
-            <span>Làm bài kiểm tra</span>
+            <Play className="w-4 h-4 fill-current" /> Làm bài kiểm tra
           </button>
         </div>
       </div>
@@ -108,15 +128,6 @@ export function ExamOverviewScreen() {
         {exam.questions.map((q, idx) => (
           <QuestionCardPreview key={q.id || idx} index={idx} question={q} showAnswer={showAnswers} />
         ))}
-        {exam.questions.length === 0 && (
-          <div className="neu-card rounded-3xl p-12 text-center space-y-4">
-            <div className="w-14 h-14 rounded-2xl neu-pill mx-auto flex items-center justify-center text-slate-400"><BookOpen className="w-6 h-6" /></div>
-            <h3 className="font-bold text-base text-ink-strong">Bộ đề chưa có câu hỏi nào</h3>
-            <button onClick={() => navigate(`/subjects/${subjectId}/exams/${examId}/edit`)} className="neu-dark-btn px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2">
-              <Edit3 className="w-4 h-4" /> Vào sửa đề
-            </button>
-          </div>
-        )}
       </div>
 
       <QuizSetupDialog 
@@ -126,8 +137,6 @@ export function ExamOverviewScreen() {
         onClose={() => setShowQuizConfig(false)}
         onStart={(count, randomize) => {
           setShowQuizConfig(false);
-          // Gắn state tạm thời qua URL params hoặc sessionStorage nếu cần, 
-          // nhưng đơn giản nhất là truyền qua query string để Hook useQuiz nhận diện
           navigate(`/subjects/${subjectId}/exams/${examId}/quiz?count=${count}&randomize=${randomize}`);
         }}
       />
