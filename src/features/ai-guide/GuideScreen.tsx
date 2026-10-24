@@ -23,8 +23,8 @@ export function GuideScreen() {
       {/* Header */}
       <section className="neu-card rounded-[26px] p-6 sm:p-8 space-y-5">
         <div className="flex items-center gap-3">
-          <div className="w-11 h-11 rounded-2xl neu-pill flex items-center justify-center text-ink-strong">
-            <Sparkles className="w-5 h-5" />
+          <div className="w-11 h-11 rounded-2xl neu-pill flex items-center justify-center text-ink-strong bg-slate-100 dark:bg-slate-700">
+            <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400" />
           </div>
           <div>
             <h2 className="text-lg sm:text-xl font-bold text-ink-strong">Hướng dẫn Tạo Bộ Đề Tự Động với AI</h2>
@@ -34,33 +34,36 @@ export function GuideScreen() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
           <div className="neu-card-inset p-4 rounded-2xl space-y-2">
-            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold">Bước 1 • Truy cập AI</span>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 dark:bg-slate-700 text-ink-strong">Bước 1 • Truy cập AI</span>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
               Mở các nền tảng AI hỗ trợ đọc tài liệu như{' '}
               <a href="https://gemini.google.com" target="_blank" rel="noreferrer" className="font-bold text-ink underline inline-flex items-center gap-0.5 hover:text-blue-600">
-                Google Gemini <ExternalLink className="w-3 h-3" />
+                Gemini <ExternalLink className="w-3 h-3" />
               </a>,{' '}
               <a href="https://chatgpt.com" target="_blank" rel="noreferrer" className="font-bold text-ink underline inline-flex items-center gap-0.5 hover:text-blue-600">
                 ChatGPT <ExternalLink className="w-3 h-3" />
+              </a>,{' '}
+              <a href="https://claude.ai" target="_blank" rel="noreferrer" className="font-bold text-ink underline inline-flex items-center gap-0.5 hover:text-blue-600">
+                Claude <ExternalLink className="w-3 h-3" />
               </a>{' '}
               hoặc{' '}
-              <a href="https://claude.ai" target="_blank" rel="noreferrer" className="font-bold text-ink underline inline-flex items-center gap-0.5 hover:text-blue-600">
-                Claude AI <ExternalLink className="w-3 h-3" />
+              <a href="https://chat.deepseek.com" target="_blank" rel="noreferrer" className="font-bold text-ink underline inline-flex items-center gap-0.5 hover:text-blue-600">
+                DeepSeek <ExternalLink className="w-3 h-3" />
               </a>.
             </p>
           </div>
 
           <div className="neu-card-inset p-4 rounded-2xl space-y-2">
-            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold">Bước 2 • Đính kèm File</span>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 dark:bg-slate-700 text-ink-strong">Bước 2 • Đính kèm File</span>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
               Nhấn biểu tượng dấu cộng <strong>(+)</strong> trên khung chat của AI để{' '}
               <strong>đính kèm file tài liệu</strong> (PDF, DOCX, TXT hoặc ảnh chụp đề cương).
             </p>
           </div>
 
           <div className="neu-card-inset p-4 rounded-2xl space-y-2">
-            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold">Bước 3 • Dán Prompt & Nhập đề</span>
-            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-400 leading-relaxed pt-1">
+            <span className="neu-pill px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-200 dark:bg-slate-700 text-ink-strong">Bước 3 • Dán Prompt & Nhập đề</span>
+            <p className="text-xs sm:text-sm text-slate-600 dark:text-slate-300 leading-relaxed pt-1">
               Chọn định dạng bạn muốn (JSON hoặc TXT) bên dưới, bấm <strong>Sao chép</strong>, dán vào khung chat AI. Sau đó copy kết quả dán vào tab Editor của bộ đề tương ứng.
             </p>
           </div>
@@ -74,19 +77,19 @@ export function GuideScreen() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-ink-strong flex items-center gap-2">
-                <Braces className="w-4 h-4" /> Định dạng JSON
+                <Braces className="w-4 h-4 text-indigo-500" /> Định dạng JSON
               </h3>
               <p className="text-xs text-slate-400">Khuyên dùng cho các AI hiện đại (Gemini, GPT-4o)</p>
             </div>
             <button
               onClick={() => handleCopy(PROMPT_JSON, 'json')}
-              className="neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0"
+              className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-colors bg-ink-strong text-app hover:bg-ink-strong/90 shadow-md"
             >
               {copiedTab === 'json' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copiedTab === 'json' ? 'Đã chép' : 'Sao chép'}
             </button>
           </div>
-          <pre className="flex-1 neu-card-inset p-4 rounded-2xl text-xs font-mono text-ink whitespace-pre-wrap leading-relaxed overflow-x-auto">
+          <pre className="flex-1 neu-card-inset p-4 rounded-2xl text-xs font-mono text-ink whitespace-pre-wrap leading-relaxed overflow-x-auto custom-scrollbar">
             {PROMPT_JSON}
           </pre>
         </section>
@@ -96,19 +99,19 @@ export function GuideScreen() {
           <div className="flex items-center justify-between">
             <div>
               <h3 className="font-bold text-base text-ink-strong flex items-center gap-2">
-                <BookOpen className="w-4 h-4" /> Định dạng TXT
+                <BookOpen className="w-4 h-4 text-emerald-500" /> Định dạng TXT
               </h3>
               <p className="text-xs text-slate-400">Phù hợp cho AI trả kết quả nhanh, ít token</p>
             </div>
             <button
               onClick={() => handleCopy(PROMPT_TXT, 'txt')}
-              className="neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0"
+              className="px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 shrink-0 transition-colors bg-ink-strong text-app hover:bg-ink-strong/90 shadow-md"
             >
               {copiedTab === 'txt' ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
               {copiedTab === 'txt' ? 'Đã chép' : 'Sao chép'}
             </button>
           </div>
-          <pre className="flex-1 neu-card-inset p-4 rounded-2xl text-xs font-mono text-ink whitespace-pre-wrap leading-relaxed overflow-x-auto">
+          <pre className="flex-1 neu-card-inset p-4 rounded-2xl text-xs font-mono text-ink whitespace-pre-wrap leading-relaxed overflow-x-auto custom-scrollbar">
             {PROMPT_TXT}
           </pre>
         </section>

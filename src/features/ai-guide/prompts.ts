@@ -2,7 +2,9 @@ export const PROMPT_JSON = `Bạn là một chuyên gia biên soạn đề kiể
 Dựa trên tài liệu được đính kèm (hoặc nội dung tôi cung cấp bên dưới), hãy tạo danh sách câu hỏi trắc nghiệm khách quan (mỗi câu có 4 lựa chọn, trong đó chỉ có đúng 1 lựa chọn đúng là "true" và 3 lựa chọn sai là "false").
 
 YÊU CẦU ĐỊNH DẠNG ĐẦU RA:
-Chỉ trả về duy nhất một mảng JSON hợp lệ theo đúng cấu trúc dưới đây (không giải thích thêm ngoài khối code):
+1. TUYỆT ĐỐI KHÔNG sử dụng markdown block (không bọc trong \`\`\`json ... \`\`\`).
+2. KHÔNG có bất kỳ lời dẫn, chào hỏi hay giải thích nào.
+3. Chỉ trả về duy nhất một mảng JSON hợp lệ theo đúng cấu trúc dưới đây:
 
 [
 	{
@@ -20,7 +22,9 @@ export const PROMPT_TXT = `Bạn là một chuyên gia biên soạn đề kiểm
 Dựa trên tài liệu được đính kèm (hoặc nội dung tôi cung cấp bên dưới), hãy tạo danh sách câu hỏi trắc nghiệm khách quan (mỗi câu có 4 lựa chọn, trong đó chỉ có đúng 1 lựa chọn đúng là "ans.*" và 3 lựa chọn sai là "ans.").
 
 YÊU CẦU ĐỊNH DẠNG ĐẦU RA:
-Chỉ trả về duy nhất nội dung văn bản theo đúng cú pháp dưới đây (không giải thích thêm):
+1. TUYỆT ĐỐI KHÔNG sử dụng markdown block (không bọc trong \`\`\`txt ... \`\`\`).
+2. KHÔNG có bất kỳ lời dẫn, chào hỏi hay giải thích nào.
+3. Chỉ trả về đúng cấu trúc văn bản dưới đây:
 
 ask : <Nội dung câu hỏi>
 ans. <Nội dung lựa chọn sai>
