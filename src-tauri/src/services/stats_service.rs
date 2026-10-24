@@ -68,7 +68,7 @@ pub fn get_overview(pool: &DbPool, period: &str) -> Result<StatsOverviewDto, App
     let series = if period == "week" {
         let mut s = Vec::new();
         for i in 0..7 {
-            let d = from_hcm.date_naive() + Duration::days(i);
+            let d = from_hcm.date() + Duration::days(i);
             let label = match d.weekday().num_days_from_monday() {
                 0 => "T2",
                 1 => "T3",
@@ -102,7 +102,7 @@ pub fn get_overview(pool: &DbPool, period: &str) -> Result<StatsOverviewDto, App
         // Chia làm 4 tuần
         let mut s = Vec::new();
         for w in 0..4 {
-            let start_w = from_hcm.date_naive() + Duration::days(w * 7);
+            let start_w = from_hcm.date() + Duration::days(w * 7);
             let end_w = start_w + Duration::days(6);
             let week_attempts: Vec<f64> = attempts_data
                 .iter()
