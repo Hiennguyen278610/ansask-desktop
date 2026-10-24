@@ -1,6 +1,3 @@
-/* Neumorphic soft UI — design-system.md §1/§2.5/§2.6.
-   KHÔNG hex ở đây — mọi màu đọc từ var(--*) trong tokens.css. */
-
 .neu-shell {
   background: var(--neu-surface);
   box-shadow: 14px 14px 32px var(--shadow-1), -14px -14px 32px var(--highlight);
@@ -23,12 +20,14 @@
   background: var(--neu-surface);
   box-shadow: 5px 5px 11px var(--shadow-3), -5px -5px 11px var(--highlight);
   border: 1px solid var(--border-strong);
+  color: var(--ink-800);
 }
 
 .neu-pill-active {
   background: var(--neu-surface-raised);
   box-shadow: 6px 6px 14px var(--shadow-4), -6px -6px 14px var(--highlight);
-  border: 1.5px solid var(--highlight);
+  border: 1.5px solid var(--border-strong);
+  color: var(--ink-900);
 }
 
 .neu-icon-btn {
@@ -36,6 +35,7 @@
   box-shadow: 4px 4px 9px var(--shadow-3), -4px -4px 9px var(--highlight);
   border: 1px solid var(--border-strong);
   transition: all 0.2s ease;
+  color: var(--ink-800);
 }
 .neu-icon-btn:hover {
   box-shadow: 2px 2px 5px var(--shadow-3), -2px -2px 5px var(--highlight);
@@ -49,10 +49,11 @@
   background: linear-gradient(145deg, var(--cta-from), var(--cta-to));
   color: var(--cta-fg);
   box-shadow: 5px 5px 12px var(--shadow-5), -4px -4px 10px var(--highlight);
+  border: 1px solid var(--border-strong);
   transition: all 0.2s ease;
 }
 .neu-dark-btn:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
   transform: translateY(-1px);
 }
 
@@ -62,12 +63,11 @@
 }
 .animate-fade-in { animation: fadeIn 200ms ease-out; }
 
-/* Scrollbar: dùng token, đổi theo theme qua .dark */
+/* Scrollbar mảnh và đẹp hơn */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 999px; }
 ::-webkit-scrollbar-thumb:hover { background: var(--scrollbar-thumb-hover); }
-html { scrollbar-width: thin; scrollbar-color: var(--scrollbar-thumb) transparent; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
