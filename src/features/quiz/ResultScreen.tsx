@@ -17,10 +17,16 @@ export function ResultScreen() {
     enabled: !!attemptId,
   });
 
-  // Lấy danh sách câu sai (ưu tiên state truyền sang từ Stream Mode)
+  // Lấy danh sách câu sai. 
+  // Nếu từ Stream mode truyền sang: Dùng danh sách từ state.
+  // Nếu từ Normal mode (state undefined): Dùng danh sách tính từ review.
   const failedIds = useMemo(() => {
-    if (location.state?.failedIds) return location.state.failedIds;
-    if (review) return review.questions.filter(q => !q.isCorrect).map(q => q.questionId);
+    if (location.state?.failedIds && location.state.failedIds.length > 0) {
+      return location.state.failedIds;
+    }
+    if (review) {
+      return review.questions.filter(q => !q.isCorrect).map(q => q.questionId);
+    }
     return [];
   }, [location.state, review]);
 

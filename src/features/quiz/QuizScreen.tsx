@@ -39,8 +39,10 @@ export function QuizScreen() {
   // ==========================================
   if (quiz.mode === 'stream') {
     const q = quiz.questions[quiz.currentIdx];
-    const isChecked = quiz.checkedAnswers[q.id];
-    const isCorrect = isChecked === true;
+    // Lấy trạng thái: undefined (chưa check), true (đúng), false (sai)
+    const checkState = quiz.checkedAnswers[q.id]; 
+    const isChecked = checkState !== undefined;
+    const isCorrect = checkState === true;
     const hasSelected = (quiz.answers[q.id] || []).length > 0;
 
     return (

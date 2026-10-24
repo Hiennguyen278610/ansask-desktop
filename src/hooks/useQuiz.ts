@@ -118,7 +118,7 @@ export function useQuiz(examId?: string) {
       // Truyền danh sách câu sai sang màn Result
       navigate(`/results/${res.attemptId}`, { 
         replace: true,
-        state: { failedIds: Array.from(failedQuestions) }
+        state: failedQuestions.size > 0 ? { failedIds: Array.from(failedQuestions) } : undefined
       });
     } catch (err: unknown) {
       showToast((err as Error).message || 'Lỗi nộp bài');
