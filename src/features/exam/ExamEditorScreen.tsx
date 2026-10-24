@@ -17,15 +17,12 @@ export function ExamEditorScreen() {
   const [showNav, setShowNav] = useState(false);
   const questionRefs = useRef<Record<string, HTMLDivElement>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
-  
-  // Dùng ref để đảm bảo chỉ import 1 lần (chống StrictMode chạy 2 lần)
   const hasImported = useRef(false);
 
   useEffect(() => {
     if (location.state?.importText && !hasImported.current) {
       hasImported.current = true;
       ed.handleRawChange(location.state.importText);
-      // Xoá state bằng navigate của router thay vì window.history
       navigate(location.pathname, { replace: true, state: {} });
       showToast('Đã tải nội dung từ file!');
     }
@@ -65,7 +62,8 @@ export function ExamEditorScreen() {
   };
 
   return (
-    <div className="flex flex-col h-full min-h-0 relative">
+    // Dùng flex-1 min-h-0 thay cho h-full
+    <div className="flex flex-col flex-1 min-h-0 relative">
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 mb-5">
         <div className="flex-1 flex items-center gap-3">
           <button onClick={() => navigate(`/subjects/${subjectId}/exams`)} className="neu-icon-btn w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
