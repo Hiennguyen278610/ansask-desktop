@@ -50,6 +50,6 @@ jobs:
           tagName: ${{ github.ref_name }}
           releaseName: 'ansask-desktop ${{ github.ref_name }}'
           releaseBody: 'Xem chi tiết tại CHANGELOG.md'
-          releaseDraft: false
+          releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}

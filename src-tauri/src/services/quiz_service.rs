@@ -18,6 +18,8 @@ pub fn start_quiz(pool: &DbPool, req: QuizStartReq) -> Result<QuizStartRes, AppE
     let randomize = req.randomize.unwrap_or(true);
     let req_count = req.count.unwrap_or(exam.questions.len());
     let mut n = std::cmp::min(req_count, exam.questions.len());
+
+    // Q-09: Giới hạn 200 câu
     if n > 200 {
         n = 200;
     }
@@ -34,14 +36,14 @@ pub fn start_quiz(pool: &DbPool, req: QuizStartReq) -> Result<QuizStartRes, AppE
     pool_qs.truncate(n);
 
     let mut final_qs = Vec::new();
-    for q in pool_qs.into_iter() {
+    for q in pool_qs {
         let mut opts = q.options;
         if randomize {
             opts.shuffle(&mut rng);
         }
         let option_order: Vec<String> = opts.iter().map(|o| o.id.clone()).collect();
 
-        // Ẩn đáp án đúng (is_correct = false) khi trả về
+        // Ẩn đáp án đúng
         let options_dto: Vec<OptionDto> = opts
             .into_iter()
             .map(|o| OptionDto {
