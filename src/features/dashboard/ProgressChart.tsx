@@ -1,4 +1,10 @@
-export function ProgressChart({ series }: { series: any[] }) {
+export interface ChartSeriesItem {
+  label: string;
+  count: number;
+  avgScore: number;
+}
+
+export function ProgressChart({ series }: { series: ChartSeriesItem[] }) {
   return (
     <section className="lg:col-span-2 neu-card rounded-[26px] p-5 sm:p-6 flex flex-col justify-between">
       <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
