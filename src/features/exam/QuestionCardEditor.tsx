@@ -45,7 +45,7 @@ export function QuestionCardEditor({ index, question, onUpdate, onDelete }: Prop
           value={question.ask}
           onChange={handleAskChange}
           placeholder="Nhập nội dung câu hỏi..."
-          className="flex-1 p-2 rounded-xl bg-white/70 text-ink-strong font-medium text-sm border border-slate-300 focus:outline-none focus:border-ink-strong resize-none"
+          className="flex-1 p-2 rounded-xl bg-transparent text-ink-strong font-medium text-sm border border-slate-300 dark:border-slate-600 focus:outline-none focus:border-ink-strong resize-none"
           rows={2}
         />
         <button onClick={onDelete} className="neu-icon-btn w-8 h-8 rounded-xl flex items-center justify-center text-slate-400 hover:text-rose-500 shrink-0">
@@ -55,10 +55,10 @@ export function QuestionCardEditor({ index, question, onUpdate, onDelete }: Prop
 
       <div className="space-y-2">
         {question.options.map((opt, i) => (
-          <div key={i} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${opt.isCorrect ? 'bg-emerald-50/80 border-emerald-400/70' : 'bg-white/40 border-slate-200'}`}>
+          <div key={i} className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl border transition-all ${opt.isCorrect ? 'bg-emerald-50/80 dark:bg-emerald-900/20 border-emerald-400/70' : 'bg-transparent border-slate-300 dark:border-slate-600'}`}>
             <label className="flex items-center cursor-pointer" onClick={() => handleSetCorrect(i)}>
               <input type="radio" checked={opt.isCorrect} onChange={() => {}} className="sr-only" />
-              <span className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${opt.isCorrect ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-400 bg-slate-100'}`}>
+              <span className={`w-5 h-5 rounded-full flex items-center justify-center border transition-all ${opt.isCorrect ? 'border-emerald-600 bg-emerald-600 text-white' : 'border-slate-400 bg-transparent'}`}>
                 {opt.isCorrect && <span className="w-2 h-2 rounded-full bg-white" />}
               </span>
             </label>
@@ -69,14 +69,14 @@ export function QuestionCardEditor({ index, question, onUpdate, onDelete }: Prop
               className="flex-1 bg-transparent border-none focus:outline-none text-sm text-ink"
               placeholder="Nhập lựa chọn..."
             />
-            {opt.isCorrect && <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700">Đúng</span>}
+            {opt.isCorrect && <span className="text-[11px] font-bold px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-700 dark:text-emerald-400">Đúng</span>}
             {question.options.length > 2 && (
               <button onClick={() => handleRemoveOption(i)} className="text-slate-400 hover:text-rose-500 p-1"><X className="w-3.5 h-3.5" /></button>
             )}
           </div>
         ))}
       </div>
-      <button onClick={handleAddOption} className="text-xs font-semibold text-slate-500 hover:text-ink-strong flex items-center gap-1 w-fit px-2 py-1 rounded-lg hover:bg-white/60">
+      <button onClick={handleAddOption} className="text-xs font-semibold text-slate-500 hover:text-ink-strong flex items-center gap-1 w-fit px-2 py-1 rounded-lg hover:bg-white/60 dark:hover:bg-white/10">
         <Plus className="w-3.5 h-3.5" /> Thêm lựa chọn
       </button>
     </div>
