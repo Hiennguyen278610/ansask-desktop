@@ -34,6 +34,10 @@ pub fn attempt_list(
     attempt_repo::list_by_exam(&state.pool, &req.exam_id)
 }
 #[tauri::command]
+pub fn attempt_list_all(state: State<'_, AppState>) -> Result<Vec<AttemptSummary>, AppError> {
+    attempt_repo::list_all(&state.pool)
+}
+#[tauri::command]
 pub fn attempt_review(
     state: State<'_, AppState>,
     req: IdReq,

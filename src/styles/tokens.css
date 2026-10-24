@@ -54,3 +54,13 @@
   --syntax-ask: #fb7185;
   --syntax-ans: #60a5fa;
 }
+
+/* Chart Colors */
+:root {
+  --chart-line: #3b82f6;
+  --chart-bar-track: #e2e8f0;
+}
+.dark {
+  --chart-line: #60a5fa;
+  --chart-bar-track: #334155;
+}

@@ -16,9 +16,12 @@ export function ExamEditorScreen() {
   if (ed.isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải đề...</div>;
 
   const handleJump = (idx: number) => {
-    const qId = ed.questions[idx].id || `q-idx-${idx}`;
+    const qId = `q-idx-${idx}`;
     questionRefs.current[qId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   };
+
+  // Map dữ liệu cho Navigator (vì QuestionUpsertReq không có id)
+  const navQuestions = ed.questions.map((q, i) => ({ id: `q-idx-${i}`, ask: q.ask }));
 
   return (
     <div className="space-y-5 flex-1 flex flex-col animate-fade-in relative pb-20">
@@ -54,7 +57,7 @@ export function ExamEditorScreen() {
           </div>
           <div className="flex-1 overflow-y-auto pr-1 space-y-1">
             {ed.questions.map((q, i) => (
-              <div key={q.id || i} className="py-1" ref={el => { if (el) questionRefs.current[q.id || `q-idx-${i}`] = el; }}>
+              <div key={i} className="py-1" ref={el => { if (el) questionRefs.current[`q-idx-${i}`] = el; }}>
                 <QuestionCardEditor
                   index={i}
                   question={q}
@@ -123,7 +126,7 @@ export function ExamEditorScreen() {
 
       <QuestionNavigatorDialog 
         open={showNav} 
-        questions={ed.questions} 
+        questions={navQuestions} 
         onSelect={handleJump} 
         onClose={() => setShowNav(false)} 
       />

@@ -42,4 +42,5 @@ export function importParse(format: 'txt' | 'json', raw: string): Promise<Parsed
 export function quizStart(examId: string, count?: number, randomize = true): Promise<QuizStartRes> { return invoke('quiz_start', { req: { examId, count, randomize } }); }
 export function attemptSubmit(req: AttemptSubmitReq): Promise<AttemptResultDto> { return invoke('attempt_submit', { req }); }
 export function attemptList(examId: string): Promise<AttemptSummary[]> { return invoke('attempt_list', { req: { examId } }); }
+export function attemptListAll(): Promise<AttemptSummary[]> { return invoke('attempt_list_all'); }
 export function attemptReview(id: string): Promise<AttemptReviewDto> { return invoke('attempt_review', { req: { id } }); }
