@@ -1,6 +1,8 @@
 import { useParams, useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, Save, Plus, List, Upload } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 import { useExamEditor } from '@/hooks/useExamEditor';
 import { QuestionCardEditor } from './QuestionCardEditor';
 import { SyntaxHighlightedTextarea } from './SyntaxHighlightedTextarea';
@@ -16,7 +18,6 @@ export function ExamEditorScreen() {
   const ed = useExamEditor(examId, subjectId);
   const [showNav, setShowNav] = useState(false);
   const questionRefs = useRef<Record<string, HTMLDivElement>>({});
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const hasImported = useRef(false);
 
   useEffect(() => {
@@ -37,32 +38,26 @@ export function ExamEditorScreen() {
 
   const navQuestions = ed.questions.map((q, i) => ({ id: `q-idx-${i}`, ask: q.ask }));
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const isTxt = file.name.endsWith('.txt');
-    const isJson = file.name.endsWith('.json');
-    
-    if (!isTxt && !isJson) {
-      showToast('Lỗi: Chỉ chấp nhận file .txt hoặc .json!');
-      e.target.value = '';
-      return;
+  const handleImportFile = async () => {
+    try {
+      const filePath = await open({
+        multiple: false,
+        filters: [{ name: 'Exam Files', extensions: ['txt', 'json'] }]
+      });
+      
+      if (filePath) {
+        const content = await readTextFile(filePath as string);
+        ed.handleRawChange(content);
+        ed.handleSwitchFormat(filePath.endsWith('.json') ? 'json' : 'txt');
+        showToast(`Đã tải nội dung từ file!`);
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      showToast('Lỗi khi đọc file.');
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      ed.handleRawChange(content);
-      ed.handleSwitchFormat(isJson ? 'json' : 'txt');
-      showToast(`Đã tải nội dung từ ${file.name}`);
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   return (
-    // Dùng flex-1 min-h-0 thay cho h-full
     <div className="flex flex-col flex-1 min-h-0 relative">
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 mb-5">
         <div className="flex-1 flex items-center gap-3">
@@ -78,8 +73,7 @@ export function ExamEditorScreen() {
           />
         </div>
         <div className="flex items-center gap-2.5 justify-end">
-          <input type="file" accept=".txt,.json" className="hidden" ref={fileInputRef} onChange={handleFileUpload} />
-          <button onClick={() => fileInputRef.current?.click()} className="neu-pill px-3 py-2 rounded-xl text-xs font-bold text-ink flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10" title="Nhập từ file">
+          <button onClick={handleImportFile} className="neu-pill px-3 py-2 rounded-xl text-xs font-bold text-ink flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10" title="Nhập từ file">
             <Upload className="w-4 h-4" /> Nhập File
           </button>
           

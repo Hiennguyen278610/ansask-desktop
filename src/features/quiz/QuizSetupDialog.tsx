@@ -19,6 +19,12 @@ export function QuizSetupDialog({ open, examId, maxQuestions, onClose, onStart }
     onStart(finalCount, randomize);
   };
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = Number(e.target.value);
+    if (isNaN(val)) return;
+    setCount(Math.min(Math.max(1, val), maxQuestions));
+  };
+
   return (
     <Dialog open={open} title="Cấu hình Bài kiểm tra" onClose={onClose}
       footer={
@@ -37,9 +43,9 @@ export function QuizSetupDialog({ open, examId, maxQuestions, onClose, onStart }
           <input
             type="number"
             min="1"
-            max="200"
+            max={maxQuestions}
             value={count}
-            onChange={(e) => setCount(Number(e.target.value) || 1)}
+            onChange={handleInputChange}
             className="w-full px-4 py-3 rounded-xl neu-card-inset text-base font-bold text-ink-strong focus:outline-none"
           />
         </div>
@@ -47,15 +53,27 @@ export function QuizSetupDialog({ open, examId, maxQuestions, onClose, onStart }
         <div>
           <span className="text-xs font-semibold text-slate-400 mb-1.5 block">Chọn nhanh:</span>
           <div className="grid grid-cols-4 gap-2">
-            {[25, 32, 40].map(num => (
-              <button key={num} onClick={() => setCount(num)}
-                className={`py-2 rounded-xl text-xs font-bold transition-all ${count === num ? 'bg-ink-strong text-app shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
-                {num} câu
-              </button>
-            ))}
+            {[25, 32, 40].map(num => {
+              // Nếu số câu của đề nhỏ hơn nút preset, hiển thị giá trị thực tế (hoặc disable)
+              const displayNum = Math.min(num, maxQuestions);
+              const isDisabled = num > maxQuestions;
+              
+              return (
+                <button key={num} 
+                  disabled={isDisabled}
+                  onClick={() => setCount(displayNum)}
+                  className={`py-2 rounded-xl text-xs font-bold transition-all ${
+                    count === displayNum 
+                      ? 'bg-ink-strong text-app shadow-md' 
+                      : isDisabled ? 'opacity-40 cursor-not-allowed neu-pill text-ink' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'
+                  }`}>
+                  {displayNum} câu
+                </button>
+              );
+            })}
             <button onClick={() => setCount(maxQuestions)}
               className={`py-2 rounded-xl text-xs font-bold transition-all ${count === maxQuestions ? 'bg-ink-strong text-app shadow-md' : 'neu-pill text-ink hover:bg-white/70 dark:hover:bg-white/10'}`}>
-              Tất cả
+              Tất cả ({maxQuestions})
             </button>
           </div>
         </div>

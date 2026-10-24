@@ -1,6 +1,8 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { useParams, useNavigate } from 'react-router';
 import { Plus, BookOpen, ChevronRight, Upload } from 'lucide-react';
+import { open } from '@tauri-apps/plugin-dialog';
+import { readTextFile } from '@tauri-apps/plugin-fs';
 import { BreadcrumbHeader } from '@/components/layout/BreadcrumbHeader';
 import { ExamCard } from './ExamCard';
 import { DeleteConfirmDialog } from '@/components/ui/DeleteConfirmDialog';
@@ -19,36 +21,30 @@ export function ExamListScreen() {
   const deleteMut = useDeleteExam();
   
   const [deletingExam, setDeletingExam] = useState<ExamSummary | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   
   const subject = subjects?.find(s => s.id === subjectId);
   const subjectColor = subject?.color || 'var(--ink-800)';
 
-  const handleImportFile = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    const isTxt = file.name.endsWith('.txt');
-    const isJson = file.name.endsWith('.json');
-    if (!isTxt && !isJson) {
-      showToast('Lỗi: Chỉ chấp nhận file .txt hoặc .json!');
-      e.target.value = '';
-      return;
+  const handleImportFile = async () => {
+    try {
+      const filePath = await open({
+        multiple: false,
+        filters: [{ name: 'Exam Files', extensions: ['txt', 'json'] }]
+      });
+      
+      if (filePath) {
+        const content = await readTextFile(filePath as string);
+        navigate(`/subjects/${subjectId}/exams/new`, { state: { importText: content } });
+        showToast(`Đã tải nội dung từ file!`);
+      }
+    } catch (err: unknown) {
+      console.error(err);
+      showToast('Lỗi khi đọc file.');
     }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const content = event.target?.result as string;
-      // Chuyển sang màn tạo đề mới kèm nội dung file
-      navigate(`/subjects/${subjectId}/exams/new`, { state: { importText: content } });
-      showToast(`Đã tải nội dung từ ${file.name}`);
-    };
-    reader.readAsText(file);
-    e.target.value = '';
   };
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in pb-4">
       <BreadcrumbHeader>
         <button onClick={() => navigate('/subjects')} className="text-slate-500 hover:text-ink-strong flex items-center gap-1">
           root <ChevronRight className="w-4 h-4" />
@@ -59,8 +55,7 @@ export function ExamListScreen() {
         </span>
         
         <div className="ml-auto flex items-center gap-2">
-          <input type="file" accept=".txt,.json" className="hidden" ref={fileInputRef} onChange={handleImportFile} />
-          <button onClick={() => fileInputRef.current?.click()} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10">
+          <button onClick={handleImportFile} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2 hover:bg-white/70 dark:hover:bg-white/10">
             <Upload className="w-4 h-4" /> Nhập bộ đề
           </button>
           <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
