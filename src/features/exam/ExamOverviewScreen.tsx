@@ -5,12 +5,10 @@ import { useQuery } from '@tanstack/react-query';
 import { examGet } from '@/lib/tauri/commands';
 import { useSubjects } from '@/hooks/useSubjects';
 import { QuestionCardPreview } from './QuestionCardPreview';
-import { useUiStore } from '@/stores/uiStore';
 
 export function ExamOverviewScreen() {
   const { subjectId, examId } = useParams();
   const navigate = useNavigate();
-  const showToast = useUiStore(s => s.showToast);
   
   const { data: subjects } = useSubjects();
   const { data: exam, isLoading, isError } = useQuery({
@@ -69,7 +67,7 @@ export function ExamOverviewScreen() {
           </button>
 
           <button
-            onClick={() => showToast('Tính năng Làm bài kiểm tra sẽ có ở Sprint 03!')}
+            onClick={() => navigate(`/subjects/${subjectId}/exams/${examId}/quiz`)}
             className="neu-dark-btn px-5 py-2.5 rounded-2xl text-xs sm:text-sm font-bold flex items-center gap-2"
           >
             <Play className="w-4 h-4 fill-current" />

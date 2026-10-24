@@ -21,7 +21,7 @@ export function QuestionCardPreview({ index, question, showAnswer }: Props) {
       <div className="space-y-2.5">
         {question.options.map((opt, oIdx) => {
           const isCorrectShown = showAnswer && opt.isCorrect;
-          let rowStyle = 'bg-[#eef2f6]/70 dark:bg-transparent border-white/70 dark:border-slate-600';
+          let rowStyle = 'bg-neu-inset/70 dark:bg-transparent border-white/70 dark:border-slate-600';
           if (isCorrectShown) {
             rowStyle = 'bg-emerald-50/90 dark:bg-emerald-900/20 border-emerald-400/80 dark:border-emerald-600 text-emerald-950 dark:text-emerald-300 font-semibold';
           }
