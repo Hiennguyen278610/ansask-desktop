@@ -46,7 +46,7 @@ export function QuizScreen() {
 
     return (
       <div className="flex flex-col h-full min-h-0 animate-fade-in relative max-w-3xl mx-auto w-full">
-        {/* Thanh công cụ trên cùng */}
+        {/* Thanh công cụ trên cùng - KHÔNG CÓ NÚT DANH SÁCH */}
         <div className="neu-card rounded-2xl p-4 flex items-center justify-between gap-4 shrink-0 mb-4">
           <div className="flex items-center gap-4">
             <div className="neu-pill px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-ink-strong">
@@ -56,12 +56,8 @@ export function QuizScreen() {
             <p className="text-xs font-bold text-ink-strong hidden sm:block">Câu {quiz.currentIdx + 1} / {total}</p>
           </div>
           <div className="flex items-center gap-2">
-            {/* Nút Nộp bài luôn hiển thị */}
             <button onClick={quiz.submit} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold text-rose-600 flex items-center gap-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30">
               <Send className="w-4 h-4" /> Nộp bài
-            </button>
-            <button onClick={() => setShowNav(true)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
-              <List className="w-4 h-4" /> Danh sách
             </button>
           </div>
         </div>
@@ -103,7 +99,7 @@ export function QuizScreen() {
           </div>
         </div>
 
-        <QuestionNavigatorDialog open={showNav} questions={quiz.questions} answers={quiz.answers} onSelect={handleJump} onClose={() => setShowNav(false)} />
+        {/* Đã xoá QuestionNavigatorDialog khỏi Stream Mode vì không cho phép nhảy câu */}
       </div>
     );
   }
