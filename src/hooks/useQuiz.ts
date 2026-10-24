@@ -24,7 +24,6 @@ export function useQuiz(examId?: string) {
   const [checkedAnswers, setCheckedAnswers] = useState<Record<string, boolean>>({});
   const [failedQuestions, setFailedQuestions] = useState<Set<string>>(new Set());
 
-  // Lấy params 1 lần duy nhất để tránh infinite loop
   const initParams = useMemo(() => {
     return {
       count: searchParams.get('count') ? parseInt(searchParams.get('count')!, 10) : undefined,
@@ -75,11 +74,10 @@ export function useQuiz(examId?: string) {
     const selected = answers[qId] || [];
     if (selected.length === 0) return showToast('Vui lòng chọn đáp án!');
     
-    // OptionDto trả về từ BE có trường isCorrect (camelCase)
-    const correctIds = q.options.filter(o => o.isCorrect).map(o => o.id).sort();
-    const selIds = [...selected].sort();
+    const correctSet = new Set(q.options.filter(o => o.isCorrect).map(o => o.id));
+    const selectedSet = new Set(selected);
+    const isCorrect = correctSet.size === selectedSet.size && [...correctSet].every(id => selectedSet.has(id));
     
-    const isCorrect = JSON.stringify(correctIds) === JSON.stringify(selIds);
     if (!isCorrect) {
       setFailedQuestions(prev => new Set(prev).add(qId));
     }
@@ -116,13 +114,18 @@ export function useQuiz(examId?: string) {
       const res = await attemptSubmit(req);
       showToast(`Nộp bài thành công! Điểm: ${res.score}/10`);
       qc.invalidateQueries({ queryKey: ['exams', examId] });
-      navigate(`/results/${res.attemptId}`, { replace: true });
+      
+      // Truyền danh sách câu sai sang màn Result
+      navigate(`/results/${res.attemptId}`, { 
+        replace: true,
+        state: { failedIds: Array.from(failedQuestions) }
+      });
     } catch (err: unknown) {
       showToast((err as Error).message || 'Lỗi nộp bài');
     } finally {
       setIsSubmitting(false);
     }
-  }, [examId, questions, answers, startTime, showToast, qc, navigate]);
+  }, [examId, questions, answers, startTime, showToast, qc, navigate, failedQuestions]);
 
   return { 
     questions, answers, elapsedSec, isLoading, isSubmitting, toggleAnswer, submit,

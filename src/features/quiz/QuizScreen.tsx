@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react';
 import { useParams } from 'react-router';
-import { Clock, List, CheckCircle2, ChevronRight, XCircle } from 'lucide-react';
+import { Clock, List, CheckCircle2, ChevronRight, XCircle, Send } from 'lucide-react';
 import { useQuiz } from '@/hooks/useQuiz';
 import { QuizQuestionCard } from './QuizQuestionCard';
 import { SubmitWarningDialog } from './SubmitWarningDialog';
@@ -81,16 +81,21 @@ export function QuizScreen() {
               <button 
                 onClick={() => {
                   if (quiz.currentIdx < total - 1) quiz.setCurrentIdx(prev => prev + 1);
-                  else quiz.submit(); // Hoàn thành
+                  else quiz.submit();
                 }} 
                 className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold flex items-center gap-2"
               >
                 {quiz.currentIdx < total - 1 ? 'Câu tiếp theo' : 'Hoàn thành'} <ChevronRight className="w-4 h-4"/>
               </button>
             ) : (
-              <button onClick={() => quiz.retryStreamAnswer(q.id)} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold">
-                Thử lại
-              </button>
+              <>
+                <button onClick={() => quiz.submit()} className="neu-pill px-4 py-2.5 rounded-xl text-xs font-bold text-rose-600 flex items-center gap-2">
+                  <Send className="w-4 h-4" /> Nộp bài
+                </button>
+                <button onClick={() => quiz.retryStreamAnswer(q.id)} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold">
+                  Thử lại
+                </button>
+              </>
             )}
           </div>
         </div>

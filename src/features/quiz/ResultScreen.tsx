@@ -1,6 +1,6 @@
-import { useParams, useNavigate } from 'react-router';
+import { useParams, useNavigate, useLocation } from 'react-router';
 import { ArrowLeft, CheckCircle2, XCircle, RotateCcw, Play } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { attemptReview } from '@/lib/tauri/commands';
 import { Dialog } from '@/components/ui/Dialog';
@@ -8,6 +8,7 @@ import { Dialog } from '@/components/ui/Dialog';
 export function ResultScreen() {
   const { attemptId } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const [showPracticeModal, setShowPracticeModal] = useState(false);
   
   const { data: review, isLoading } = useQuery({
@@ -16,14 +17,19 @@ export function ResultScreen() {
     enabled: !!attemptId,
   });
 
+  // Lấy danh sách câu sai (ưu tiên state truyền sang từ Stream Mode)
+  const failedIds = useMemo(() => {
+    if (location.state?.failedIds) return location.state.failedIds;
+    if (review) return review.questions.filter(q => !q.isCorrect).map(q => q.questionId);
+    return [];
+  }, [location.state, review]);
+
   if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải kết quả...</div>;
   if (!review) return <div className="p-8 text-center text-rose-500">Không tìm thấy kết quả.</div>;
 
-  const wrongQuestions = review.questions.filter(q => !q.isCorrect);
-
   const handleStartPractice = () => {
-    const ids = wrongQuestions.map(q => q.questionId).join(',');
-    navigate(`/subjects/${review.subjectId}/exams/${review.examId}/quiz?count=${ids.split(',').length}&randomize=false&mode=normal&ids=${ids}`);
+    const ids = failedIds.join(',');
+    navigate(`/subjects/${review.subjectId}/exams/${review.examId}/quiz?count=${failedIds.length}&randomize=false&mode=normal&ids=${ids}`);
   };
 
   return (
@@ -46,9 +52,9 @@ export function ResultScreen() {
           <button onClick={() => navigate(`/subjects/${review.subjectId}/exams/${review.examId}`)} className="neu-pill px-4 py-2.5 rounded-xl text-xs font-bold text-ink-strong flex items-center gap-2">
             <ArrowLeft className="w-4 h-4" /> Về tổng quan đề
           </button>
-          {wrongQuestions.length > 0 && (
+          {failedIds.length > 0 && (
             <button onClick={() => setShowPracticeModal(true)} className="neu-dark-btn px-5 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2">
-              <RotateCcw className="w-4 h-4" /> Rèn luyện câu sai ({wrongQuestions.length})
+              <RotateCcw className="w-4 h-4" /> Rèn luyện câu sai ({failedIds.length})
             </button>
           )}
         </div>
@@ -96,7 +102,7 @@ export function ResultScreen() {
             </button>
           </>
         }>
-        <p className="text-sm text-ink">Bạn có muốn bắt đầu bài kiểm tra mới chỉ với <strong>{wrongQuestions.length} câu đã làm sai</strong> không?</p>
+        <p className="text-sm text-ink">Bạn có muốn bắt đầu bài kiểm tra mới chỉ với <strong>{failedIds.length} câu đã làm sai</strong> không?</p>
         <p className="text-xs text-slate-500 mt-2">Bài kiểm tra này sẽ không tính vào thống kê điểm chính thức nhưng giúp bạn ghi nhớ kiến thức tốt hơn.</p>
       </Dialog>
     </div>
