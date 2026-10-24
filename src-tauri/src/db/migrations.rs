@@ -12,10 +12,9 @@ pub fn run(conn: &mut Connection) -> Result<(), rusqlite_migration::Error> {
 /// Test tầng DB. Phạm vi: SQLite built-in `lower()` + `trim()`.
 ///
 /// QUYẾT ĐỊNH (xem `docs/decisions/ADR-001-subject-name-uniqueness.md`):
-/// - DB bảo vệ **ASCII case** (M/m) và **trim** trên mọi ngôn ngữ.
-/// - DB KHÔNG bảo vệ **Unicode case** (Ạ/ạ, Đ/đ) — SQLite bundled `lower()`
-///   chỉ hạ ASCII; service layer (Sprint 01) chịu trách nhiệm.
-/// - Không assert xử lý dấu tiếng Việt ở đây.
+/// - DB bảo vệ **ASCII case** (M/m) và **ASCII space trim** (U+0020).
+/// - DB KHÔNG bảo vệ **Unicode case** (Ạ/ạ, Đ/đ) hay **Unicode whitespace** (tab, NBSP).
+/// - Service layer (Sprint 01) chịu trách nhiệm cho Unicode.
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -60,7 +59,7 @@ mod tests {
         assert_eq!(v, "system");
     }
 
-    // ---------- subjects.name uniqueness — ASCII case + trim ----------
+    // ---------- subjects.name uniqueness — ASCII case + ASCII space trim ----------
 
     #[test]
     fn subjects_name_blocks_ascii_case_duplicates() {
@@ -71,11 +70,11 @@ mod tests {
     }
 
     #[test]
-    fn subjects_name_blocks_ascii_trim_duplicates() {
+    fn subjects_name_blocks_ascii_space_trim_duplicates() {
         let conn = fresh();
         insert_subject(&conn, "s1", "Toan").unwrap();
         let res = insert_subject(&conn, "s2", "  Toan  ");
-        assert!(res.is_err(), "phải chặn trùng sau trim (ASCII)");
+        assert!(res.is_err(), "phải chặn trùng sau khi trim space (ASCII)");
     }
 
     #[test]
@@ -100,9 +99,8 @@ mod tests {
         );
     }
 
-    /// Ghi nhận giới hạn: Unicode case (Ạ/ạ) KHÔNG bị DB chặn — SQLite bundled
-    /// `lower()` giữ nguyên ký tự có dấu. Service layer (Sprint 01) xử lý.
-    /// Dùng 'MẠNG' vs 'mạng' — khác cả M/m và Ạ/ạ, không chỉ M/m.
+    /// Ghi nhận giới hạn: Unicode case (Ạ/ạ) KHÔNG bị DB chặn.
+    /// SQLite bundled `lower()` giữ nguyên ký tự có dấu.
     #[test]
     fn subjects_name_allows_unicode_case_duplicates_at_db_level() {
         let conn = fresh();
@@ -110,9 +108,19 @@ mod tests {
         let res = insert_subject(&conn, "s2", "mạng");
         assert!(
             res.is_ok(),
-            "SQLite bundled lower() không hạ Ạ; 'MẠNG' vs 'mạng' phải cùng insert được. \
-             Nếu DB chặn, có thể version SQLite bundled đã hỗ trợ Unicode case — \
-             cập nhật ADR-001 §3 và xem lại service layer."
+            "'MẠNG' vs 'mạng' khác cả M/m và Ạ/ạ, SQLite bundled lower() không hạ Ạ nên cùng insert được."
+        );
+    }
+
+    /// Ghi nhận giới hạn: SQLite default trim() chỉ cắt U+0020, không cắt tab.
+    #[test]
+    fn subjects_name_allows_ascii_tab_at_db_level() {
+        let conn = fresh();
+        insert_subject(&conn, "s1", "Toan").unwrap();
+        let res = insert_subject(&conn, "s2", "Toan\t");
+        assert!(
+            res.is_ok(),
+            "Tab không bị trim bởi SQLite default trim(), DB phải cho qua."
         );
     }
 
