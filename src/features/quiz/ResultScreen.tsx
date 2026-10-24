@@ -35,7 +35,7 @@ export function ResultScreen() {
 
   const handleStartPractice = () => {
     const ids = failedIds.join(',');
-    navigate(`/subjects/${review.subjectId}/exams/${review.examId}/quiz?count=${failedIds.length}&randomize=false&mode=normal&ids=${ids}`);
+    navigate(`/subjects/${review.subjectId}/exams/${review.examId}/quiz?count=${failedIds.length}&randomize=false&mode=stream&ids=${ids}`);
   };
 
   return (

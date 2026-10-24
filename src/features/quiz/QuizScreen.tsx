@@ -39,7 +39,6 @@ export function QuizScreen() {
   // ==========================================
   if (quiz.mode === 'stream') {
     const q = quiz.questions[quiz.currentIdx];
-    // Lấy trạng thái: undefined (chưa check), true (đúng), false (sai)
     const checkState = quiz.checkedAnswers[q.id]; 
     const isChecked = checkState !== undefined;
     const isCorrect = checkState === true;
@@ -47,17 +46,24 @@ export function QuizScreen() {
 
     return (
       <div className="flex flex-col h-full min-h-0 animate-fade-in relative max-w-3xl mx-auto w-full">
+        {/* Thanh công cụ trên cùng */}
         <div className="neu-card rounded-2xl p-4 flex items-center justify-between gap-4 shrink-0 mb-4">
           <div className="flex items-center gap-4">
             <div className="neu-pill px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-ink-strong">
               <Clock className="w-4 h-4 text-slate-500" />
               <span>{String(Math.floor(quiz.elapsedSec / 60)).padStart(2, '0')}:{String(quiz.elapsedSec % 60).padStart(2, '0')}</span>
             </div>
-            <p className="text-xs font-bold text-ink-strong">Câu {quiz.currentIdx + 1} / {total}</p>
+            <p className="text-xs font-bold text-ink-strong hidden sm:block">Câu {quiz.currentIdx + 1} / {total}</p>
           </div>
-          <button onClick={() => setShowNav(true)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
-            <List className="w-4 h-4" /> Danh sách
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Nút Nộp bài luôn hiển thị */}
+            <button onClick={quiz.submit} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold text-rose-600 flex items-center gap-1.5 hover:bg-rose-50 dark:hover:bg-rose-900/30">
+              <Send className="w-4 h-4" /> Nộp bài
+            </button>
+            <button onClick={() => setShowNav(true)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
+              <List className="w-4 h-4" /> Danh sách
+            </button>
+          </div>
         </div>
 
         <div className="flex-1 overflow-y-auto custom-scrollbar pb-4 min-h-0">
@@ -90,14 +96,9 @@ export function QuizScreen() {
                 {quiz.currentIdx < total - 1 ? 'Câu tiếp theo' : 'Hoàn thành'} <ChevronRight className="w-4 h-4"/>
               </button>
             ) : (
-              <>
-                <button onClick={() => quiz.submit()} className="neu-pill px-4 py-2.5 rounded-xl text-xs font-bold text-rose-600 flex items-center gap-2">
-                  <Send className="w-4 h-4" /> Nộp bài
-                </button>
-                <button onClick={() => quiz.retryStreamAnswer(q.id)} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold">
-                  Thử lại
-                </button>
-              </>
+              <button onClick={() => quiz.retryStreamAnswer(q.id)} className="neu-dark-btn px-6 py-2.5 rounded-xl text-sm font-bold">
+                Thử lại
+              </button>
             )}
           </div>
         </div>
