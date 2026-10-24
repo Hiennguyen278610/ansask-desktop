@@ -8,6 +8,7 @@ import { ExamEditorScreen } from '@/features/exam/ExamEditorScreen';
 import { QuizScreen } from '@/features/quiz/QuizScreen';
 import { ResultScreen } from '@/features/quiz/ResultScreen';
 import { GuideScreen } from '@/features/ai-guide/GuideScreen';
+import { TrashScreen } from '@/features/trash/TrashScreen';
 
 export const router = createHashRouter([
   {
@@ -23,7 +24,7 @@ export const router = createHashRouter([
       { path: 'subjects/:subjectId/exams/:examId/quiz', element: <QuizScreen /> },
       { path: 'results/:attemptId', element: <ResultScreen /> },
       { path: 'guide', element: <GuideScreen /> },
-      { path: 'trash', element: <div className="p-8 text-center text-slate-500">Thùng rác (Sprint 05)</div> },
+      { path: 'trash', element: <TrashScreen /> },
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },
