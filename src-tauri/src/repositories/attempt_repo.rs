@@ -31,13 +31,14 @@ pub fn list_by_exam(pool: &DbPool, exam_id: &str) -> Result<Vec<AttemptSummary>,
 
 pub fn get_review(pool: &DbPool, attempt_id: &str) -> Result<AttemptReviewDto, AppError> {
     let conn = pool.get()?;
-    let mut stmt = conn.prepare(
-        "SELECT exam_title, score, total_questions, correct_count FROM attempts WHERE id = ?1",
-    )?;
+    let mut stmt = conn.prepare("SELECT exam_title, score, total_questions, correct_count, exam_id, subject_id FROM attempts WHERE id = ?1")?;
+
     let mut review = stmt
         .query_row([attempt_id], |row| {
             Ok(AttemptReviewDto {
                 attempt_id: attempt_id.to_string(),
+                exam_id: row.get(4)?,
+                subject_id: row.get(5)?,
                 exam_title: row.get(0)?,
                 score: row.get(1)?,
                 total_questions: row.get::<_, i64>(2)? as usize,
@@ -58,6 +59,7 @@ pub fn get_review(pool: &DbPool, attempt_id: &str) -> Result<AttemptReviewDto, A
          FROM attempt_answers WHERE attempt_id = ?1 ORDER BY position ASC"
     )?;
     let mut aa_rows = aa_stmt.query([attempt_id])?;
+
     while let Some(row) = aa_rows.next()? {
         let options_json: String = row.get(3)?;
         let correct_json: String = row.get(4)?;

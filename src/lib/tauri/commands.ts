@@ -22,7 +22,7 @@ export interface AttemptResultDto { attemptId: string; score: number; correctCou
 
 export interface AttemptSummary { id: string; examId: string; examTitle: string; subjectId: string; subjectName: string; submittedAt: string; totalQuestions: number; correctCount: number; score: number; durationSec: number; }
 export interface GradedQuestionDto { questionId: string; position: number; questionText: string; optionsSnapshot: OptionDto[]; correctOptionIds: string[]; selectedOptionIds: string[]; optionOrder: string[]; isCorrect: boolean; }
-export interface AttemptReviewDto { attemptId: string; examTitle: string; score: number; totalQuestions: number; correctCount: number; questions: GradedQuestionDto[]; }
+export interface AttemptReviewDto { attemptId: string; examId: string; subjectId: string; examTitle: string; score: number; totalQuestions: number; correctCount: number; questions: GradedQuestionDto[]; }
 
 export function settingGet(key: string): Promise<SettingValueDto> { return invoke('setting_get', { req: { key } }); }
 export function settingSet(key: string, value: string): Promise<SettingValueDto> { return invoke('setting_set', { req: { key, value } }); }

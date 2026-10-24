@@ -60,6 +60,8 @@ pub struct GradedQuestionDto {
 #[serde(rename_all = "camelCase")]
 pub struct AttemptReviewDto {
     pub attempt_id: String,
+    pub exam_id: String,
+    pub subject_id: String,
     pub exam_title: String,
     pub score: f64,
     pub total_questions: usize,

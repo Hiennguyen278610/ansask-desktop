@@ -64,7 +64,7 @@ export function useQuiz(examId?: string) {
       const res = await attemptSubmit(req);
       showToast(`Nộp bài thành công! Điểm: ${res.score}/10`);
       qc.invalidateQueries({ queryKey: ['exams', examId] });
-      navigate(`/results/${res.attemptId}`);
+      navigate(`/results/${res.attemptId}`, { replace: true });
     } catch (err: unknown) {
       showToast((err as Error).message || 'Lỗi nộp bài');
     } finally {

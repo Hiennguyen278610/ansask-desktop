@@ -32,8 +32,8 @@ export function ResultScreen() {
           </div>
         </div>
         <div className="flex gap-3">
-          <button onClick={() => navigate(-1)} className="neu-pill px-4 py-2.5 rounded-xl text-xs font-bold text-ink-strong flex items-center gap-2">
-            <ArrowLeft className="w-4 h-4" /> Quay lại
+          <button onClick={() => navigate(`/subjects/${review.subjectId}/exams/${review.examId}`)} className="neu-pill px-4 py-2.5 rounded-xl text-xs font-bold text-ink-strong flex items-center gap-2">
+            <ArrowLeft className="w-4 h-4" /> Về tổng quan đề
           </button>
         </div>
       </div>
