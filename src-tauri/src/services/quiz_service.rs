@@ -17,15 +17,7 @@ pub fn start_quiz(pool: &DbPool, req: QuizStartReq) -> Result<QuizStartRes, AppE
 
     let randomize = req.randomize.unwrap_or(true);
     let req_count = req.count.unwrap_or(exam.questions.len());
-    let mut n = std::cmp::min(req_count, exam.questions.len());
-
-    // Q-09: Giới hạn 200 câu
-    if n > 200 {
-        n = 200;
-    }
-    if n == 0 {
-        n = 1;
-    }
+    let n = std::cmp::min(req_count, exam.questions.len()).clamp(1, 200);
 
     let mut pool_qs = exam.questions;
     let mut rng = rand::rng();
