@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router';
 import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
-import { parseTxtToQuestions, parseJsonToQuestions } from '../import/parse';
+import { parseTxtToQuestions, parseJsonToQuestions, type ParsedQuestion, type ParsedOption } from '../import/parse';
 import { useUiStore } from '@/stores/uiStore';
 
 export function MobileQuizScreen() {
@@ -9,14 +9,16 @@ export function MobileQuizScreen() {
   const navigate = useNavigate();
   const showToast = useUiStore(s => s.showToast);
   
-  const [questions, setQuestions] = useState<any[]>([]);
+  const [questions, setQuestions] = useState<ParsedQuestion[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
   const [selectedOpt, setSelectedOpt] = useState<string | null>(null);
   const [isChecked, setIsChecked] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
+  const [isAnswerCorrect, setIsAnswerCorrect] = useState(false);
 
   useEffect(() => {
     const content = location.state?.rawContent;
+    const fileName = location.state?.fileName || '';
+    
     if (!content) {
       showToast('Không tìm thấy dữ liệu!');
       navigate('/mobile-import');
@@ -24,19 +26,14 @@ export function MobileQuizScreen() {
     }
 
     try {
-      let parsed;
-      if (location.state.fileName.endsWith('.json')) {
+      let parsed: ParsedQuestion[];
+      if (fileName.endsWith('.json')) {
         parsed = parseJsonToQuestions(content);
       } else {
         parsed = parseTxtToQuestions(content);
       }
-      // Map lại format cho phù hợp UI
-      const mapped = parsed.map((q: any) => ({
-        ask: q.ask,
-        options: q.options.map((o: any, i: number) => ({ id: `opt-${i}`, text: o.text, isCorrect: o.isCorrect }))
-      }));
-      setQuestions(mapped);
-    } catch (err) {
+      setQuestions(parsed);
+    } catch {
       showToast('File không đúng định dạng!');
       navigate('/mobile-import');
     }
@@ -45,15 +42,12 @@ export function MobileQuizScreen() {
   if (questions.length === 0) return null;
 
   const q = questions[currentIdx];
-  const isMulti = q.options.filter((o: any) => o.isCorrect).length > 1;
 
   const handleCheck = () => {
     if (!selectedOpt) return;
-    // Logic check đáp án đơn giản (vì đang test mobile)
-    const correctOpts = q.options.filter((o: any) => o.isCorrect).map((o: any) => o.id);
-    // Tạm thời check đơn
+    const correctOpts = q.options.filter((o: ParsedOption) => o.isCorrect).map((o: ParsedOption) => o.id);
     const correct = correctOpts.includes(selectedOpt);
-    setIsCorrect(correct);
+    setIsAnswerCorrect(correct);
     setIsChecked(true);
     if (!correct) showToast('Sai rồi, thử lại nhé!');
   };
@@ -71,18 +65,16 @@ export function MobileQuizScreen() {
 
   return (
     <div className="flex flex-col h-[100dvh] bg-app text-ink">
-      {/* Header */}
       <div className="p-4 flex items-center justify-between border-b border-[var(--border-strong)]">
         <button onClick={() => navigate(-1)} className="p-2"><ArrowLeft className="w-6 h-6"/></button>
         <span className="font-bold text-sm">Câu {currentIdx + 1} / {questions.length}</span>
-        <div className="w-6" /> {/* Spacer */}
+        <div className="w-6" />
       </div>
 
-      {/* Nội dung câu hỏi */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         <h2 className="text-lg font-bold text-ink-strong mb-6">{q.ask}</h2>
         <div className="space-y-3">
-          {q.options.map((opt: any, idx: number) => {
+          {q.options.map((opt: ParsedOption, idx: number) => {
             const isSelected = selectedOpt === opt.id;
             let bg = 'bg-neu border-transparent';
             if (isChecked) {
@@ -107,15 +99,14 @@ export function MobileQuizScreen() {
         </div>
       </div>
 
-      {/* Nút Action dưới đáy */}
       <div className="p-4 border-t border-[var(--border-strong)] bg-neu">
         {!isChecked ? (
           <button onClick={handleCheck} disabled={!selectedOpt} className="w-full py-4 rounded-xl bg-emerald-500 text-white font-bold text-lg disabled:opacity-50">
             Xác nhận
           </button>
         ) : (
-          <button onClick={handleNext} className="w-full py-4 rounded-xl bg-blue-500 text-white font-bold text-lg">
-            {currentIdx < questions.length - 1 ? 'Câu tiếp theo' : 'Hoàn thành'}
+          <button onClick={handleNext} className={`w-full py-4 rounded-xl text-white font-bold text-lg ${isAnswerCorrect ? 'bg-blue-500' : 'bg-rose-500'}`}>
+            {isAnswerCorrect ? (currentIdx < questions.length - 1 ? 'Câu tiếp theo' : 'Hoàn thành') : 'Thử lại'}
           </button>
         )}
       </div>

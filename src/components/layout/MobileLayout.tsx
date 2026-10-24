@@ -1,5 +1,5 @@
 import { Outlet, useLocation, useNavigate } from 'react-router';
-import { Home, BookOpen, Upload, Sparkles } from 'lucide-react';
+import { Home, BookOpen, Upload } from 'lucide-react';
 
 export function MobileLayout() {
   const location = useLocation();

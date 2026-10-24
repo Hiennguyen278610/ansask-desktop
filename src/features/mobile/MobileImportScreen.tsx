@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import { Upload, FileText, CheckCircle2 } from 'lucide-react';
 import { useUiStore } from '@/stores/uiStore';
-import { parseTxtToQuestions } from '../import/serialize'; // Hoặc dùng API backend nếu cần
+ // Hoặc dùng API backend nếu cần
 
 export function MobileImportScreen() {
   const navigate = useNavigate();
