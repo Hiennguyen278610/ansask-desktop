@@ -9,10 +9,14 @@ dist-ssr/
 *.log
 npm-debug.log*
 pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
 # ---------- Tauri / Rust ----------
 src-tauri/target/
 src-tauri/gen/schemas/
+src-tauri/target/debug/
+src-tauri/target/release/
 
 # ---------- OS / Editor ----------
 .DS_Store
@@ -26,3 +30,8 @@ Thumbs.db
 .env
 .env.*
 !.env.example
+
+# ---------- Local DB ----------
+*.db
+*.db-wal
+*.db-shm
