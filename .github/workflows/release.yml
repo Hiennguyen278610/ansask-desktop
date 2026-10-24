@@ -42,6 +42,20 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
+      # BƯỚC QUAN TRỌNG: Đảm bảo Draft Release tồn tại trước khi build
+      - name: Ensure draft release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        shell: bash
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Draft release for tag $TAG already exists; reusing."
+          else
+            echo "Creating draft release for tag $TAG..."
+            gh release create "$TAG" --draft --title "ansask-desktop $TAG" --notes "Release $TAG"
+          fi
+
       - name: Build and Release
         uses: tauri-apps/tauri-action@v1
         env:
