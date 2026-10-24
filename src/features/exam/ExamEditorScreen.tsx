@@ -17,13 +17,19 @@ export function ExamEditorScreen() {
   const [showNav, setShowNav] = useState(false);
   const questionRefs = useRef<Record<string, HTMLDivElement>>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // Dùng ref để đảm bảo chỉ import 1 lần (chống StrictMode chạy 2 lần)
+  const hasImported = useRef(false);
 
   useEffect(() => {
-    if (location.state?.importText) {
+    if (location.state?.importText && !hasImported.current) {
+      hasImported.current = true;
       ed.handleRawChange(location.state.importText);
-      window.history.replaceState({}, document.title);
+      // Xoá state bằng navigate của router thay vì window.history
+      navigate(location.pathname, { replace: true, state: {} });
+      showToast('Đã tải nội dung từ file!');
     }
-  }, [location.state, ed]);
+  }, [location.state, location.pathname, navigate, ed, showToast]);
 
   if (ed.isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải đề...</div>;
 
@@ -38,7 +44,6 @@ export function ExamEditorScreen() {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Validate định dạng: chỉ nhận .txt hoặc .json
     const isTxt = file.name.endsWith('.txt');
     const isJson = file.name.endsWith('.json');
     
@@ -61,7 +66,6 @@ export function ExamEditorScreen() {
 
   return (
     <div className="flex flex-col h-full min-h-0 relative">
-      {/* Header */}
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 shrink-0 mb-5">
         <div className="flex-1 flex items-center gap-3">
           <button onClick={() => navigate(`/subjects/${subjectId}/exams`)} className="neu-icon-btn w-8 h-8 rounded-xl flex items-center justify-center shrink-0">
@@ -88,9 +92,7 @@ export function ExamEditorScreen() {
         </div>
       </div>
 
-      {/* Split Pane */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 flex-1 min-h-0">
-        {/* Cột trái: Render */}
         <div className="neu-card rounded-[26px] p-5 flex flex-col h-full min-h-0">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0">
             <h3 className="font-bold text-sm text-ink-strong">Render • Trực quan</h3>
@@ -122,7 +124,6 @@ export function ExamEditorScreen() {
           </div>
         </div>
 
-        {/* Cột phải: Code */}
         <div className="neu-card rounded-[26px] p-5 flex flex-col h-full min-h-0">
           <div className="flex items-center justify-between pb-3 mb-3 border-b border-slate-200/80 dark:border-slate-700/80 shrink-0">
             <h3 className="font-bold text-sm text-ink-strong">Editor • Đồng bộ</h3>
