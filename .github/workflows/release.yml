@@ -4,10 +4,11 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
   publish-tauri:
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
@@ -26,7 +27,6 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
 
-      # pnpm/action-setup sẽ tự đọc version từ packageManager trong package.json
       - uses: pnpm/action-setup@v4
 
       - uses: actions/setup-node@v4
@@ -40,13 +40,13 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Build and Release
-        uses: tauri-apps/tauri-action@v0
+        uses: tauri-apps/tauri-action@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           tagName: ${{ github.ref_name }}
           releaseName: 'ansask-desktop ${{ github.ref_name }}'
           releaseBody: 'Xem chi tiết tại CHANGELOG.md'
-          releaseDraft: true
+          releaseDraft: false
           prerelease: false
           args: ${{ matrix.args }}
