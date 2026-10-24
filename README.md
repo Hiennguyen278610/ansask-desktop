@@ -14,11 +14,11 @@
   </p>
 
   <p align="center">
-    <a href="https://github.com/taho140303/ansask-desktop/stargazers">
-      <img src="https://img.shields.io/github/stars/taho140303/ansask-desktop?style=social" alt="GitHub stars">
+    <a href="https://github.com/Hiennguyen278610/ansask-desktop/stargazers">
+      <img src="https://img.shields.io/github/stars/Hiennguyen278610/ansask-desktop?style=social" alt="GitHub stars">
     </a>
-    <a href="https://github.com/taho140303/ansask-desktop/network/members">
-      <img src="https://img.shields.io/github/forks/taho140303/ansask-desktop?style=social" alt="GitHub forks">
+    <a href="https://github.com/Hiennguyen278610/ansask-desktop/network/members">
+      <img src="https://img.shields.io/github/forks/Hiennguyen278610/ansask-desktop?style=social" alt="GitHub forks">
     </a>
   </p>
 </div>
@@ -66,7 +66,7 @@
 ### Cài đặt & Chạy dev
 ```bash
 # 1. Clone repo
-git clone https://github.com/taho140303/ansask-desktop.git
+git clone https://github.com/Hiennguyen278610/ansask-desktop.git
 cd ansask-desktop
 
 # 2. Cài dependencies
@@ -88,7 +88,7 @@ Mọi đóng góp đều được hoan nghênh! Vui lòng đọc [CONTRIBUTING.m
 
 ## ⭐ Lịch sử Star
 
-[![Star History Chart](https://api.star-history.com/svg?repos=taho140303/ansask-desktop&type=Date)](https://star-history.com/#taho140303/ansask-desktop&Date)
+[![Star History Chart](https://api.star-history.com/svg?repos=Hiennguyen278610/ansask-desktop&type=Date)](https://star-history.com/#Hiennguyen278610/ansask-desktop&Date)
 
 ## 📄 Giấy phép
 
