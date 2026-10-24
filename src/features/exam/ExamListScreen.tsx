@@ -66,7 +66,7 @@ export function ExamListScreen() {
               key={ex.id}
               exam={ex}
               subjectColor={subjectColor}
-              onOpen={() => navigate(`/subjects/${subjectId}/exams/${ex.id}/edit`)}
+              onOpen={() => navigate(`/subjects/${subjectId}/exams/${ex.id}`)}
               onDelete={() => setDeletingExam(ex)}
             />
           ))}
