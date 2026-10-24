@@ -1,38 +1,17 @@
 import { invoke } from './invoke';
 
 export interface SettingValueDto { key: string; value: string; }
-export interface SubjectSummary {
-  id: string;
-  name: string;
-  color: string;
-  createdAt: string;
-  examCount: number;
-  questionCount: number;
-}
-export interface ExamSummary {
-  id: string;
-  subjectId: string;
-  title: string;
-  createdAt: string;
-  attemptCount: number;
-  questionCount: number;
-}
+export interface SubjectSummary { id: string; name: string; color: string; createdAt: string; examCount: number; questionCount: number; }
+export interface ExamSummary { id: string; subjectId: string; title: string; createdAt: string; attemptCount: number; questionCount: number; }
 export interface OptionDto { id: string; text: string; isCorrect: boolean; }
 export interface QuestionDto { id: string; ask: string; options: OptionDto[]; }
-export interface ExamDetail {
-  id: string;
-  subjectId: string;
-  title: string;
-  createdAt: string;
-  updatedAt: string;
-  questions: QuestionDto[];
-}
-export interface ExamSaveReq {
-  id?: string;
-  subjectId: string;
-  title: string;
-  questions: { ask: string; options: { text: string; isCorrect: boolean }[] }[];
-}
+export interface ExamDetail { id: string; subjectId: string; title: string; createdAt: string; updatedAt: string; questions: QuestionDto[]; }
+
+export interface QuestionUpsertReq { ask: string; options: { text: string; isCorrect: boolean; }[]; }
+export interface ExamSaveReq { id?: string; subjectId: string; title: string; questions: QuestionUpsertReq[]; }
+
+export interface ValidationIssue { line?: number; field?: string; message: string; }
+export interface ParsedExamDto { questions: QuestionUpsertReq[]; issues: ValidationIssue[]; }
 
 export function settingGet(key: string): Promise<SettingValueDto> { return invoke('setting_get', { req: { key } }); }
 export function settingSet(key: string, value: string): Promise<SettingValueDto> { return invoke('setting_set', { req: { key, value } }); }
@@ -46,3 +25,5 @@ export function examList(subjectId: string): Promise<ExamSummary[]> { return inv
 export function examGet(id: string): Promise<ExamDetail> { return invoke('exam_get', { req: { id } }); }
 export function examSave(req: ExamSaveReq): Promise<string> { return invoke('exam_save', { req }); }
 export function examDelete(id: string): Promise<void> { return invoke('exam_delete', { req: { id } }); }
+
+export function importParse(format: 'txt' | 'json', raw: string): Promise<ParsedExamDto> { return invoke('import_parse', { req: { format, raw } }); }

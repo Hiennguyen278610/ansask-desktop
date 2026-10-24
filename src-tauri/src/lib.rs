@@ -29,20 +29,15 @@ pub fn run() {
             let app_dir = app
                 .path()
                 .app_data_dir()
-                .map_err(|e| format!("Không lấy được app_data_dir: {e}"))?;
+                .map_err(|e| format!("Lỗi app_data_dir: {e}"))?;
             fs::create_dir_all(&app_dir)?;
             let db_path = app_dir.join("ansask.db");
-
-            let pool =
-                db::pool::create_pool(&db_path).map_err(|e| format!("Không mở được DB: {e}"))?;
-
+            let pool = db::pool::create_pool(&db_path).map_err(|e| format!("Lỗi DB: {e}"))?;
             {
                 let mut conn = pool.get().map_err(|e| format!("Pool error: {e}"))?;
                 db::migrations::run(&mut conn).map_err(|e| format!("Migration lỗi: {e}"))?;
             }
-
             app.manage(AppState::new(pool));
-            tracing::info!("ansask-desktop khởi động, DB: {:?}", db_path);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -56,7 +51,8 @@ pub fn run() {
             commands::exam_cmds::exam_get,
             commands::exam_cmds::exam_save,
             commands::exam_cmds::exam_delete,
+            commands::import_cmds::import_parse,
         ])
         .run(tauri::generate_context!())
-        .expect("Lỗi khi chạy Tauri");
+        .expect("Lỗi chạy Tauri");
 }

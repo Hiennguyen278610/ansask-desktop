@@ -47,14 +47,16 @@ pub struct ExamSaveReq {
     pub questions: Vec<QuestionUpsertReq>,
 }
 
-#[derive(Debug, Deserialize)]
+// [FIX] Thêm Serialize và Clone cho QuestionUpsertReq
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct QuestionUpsertReq {
     pub ask: String,
     pub options: Vec<OptionUpsertReq>,
 }
 
-#[derive(Debug, Deserialize)]
+// [FIX] Thêm Serialize và Clone cho OptionUpsertReq
+#[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
 pub struct OptionUpsertReq {
     pub text: String,

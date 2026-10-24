@@ -18,7 +18,7 @@ export function ExamListScreen() {
   const [deletingExam, setDeletingExam] = useState<ExamSummary | null>(null);
   
   const subject = subjects?.find(s => s.id === subjectId);
-  const subjectColor = subject?.color || 'var(--ink-800)'; // Fallback token
+  const subjectColor = subject?.color || 'var(--ink-800)';
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -30,8 +30,8 @@ export function ExamListScreen() {
           <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: subjectColor }} />
           {subject?.name || 'Môn học'}
         </span>
-        <button className="ml-auto neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
-          <Plus className="w-4 h-4" /> Tạo bộ đề (Sprint 02)
+        <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="ml-auto neu-dark-btn px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
+          <Plus className="w-4 h-4" /> Tạo bộ đề
         </button>
       </BreadcrumbHeader>
 
@@ -41,7 +41,9 @@ export function ExamListScreen() {
         <div className="neu-card rounded-3xl p-12 text-center space-y-4">
           <div className="w-14 h-14 rounded-2xl neu-pill mx-auto flex items-center justify-center text-slate-400"><BookOpen className="w-6 h-6" /></div>
           <h3 className="font-bold text-base text-ink-strong">Môn {subject?.name} chưa có bộ đề nào</h3>
-          <p className="text-xs text-slate-400">Tính năng tạo bộ đề sẽ có ở Sprint 02.</p>
+          <button onClick={() => navigate(`/subjects/${subjectId}/exams/new`)} className="neu-dark-btn px-5 py-2.5 rounded-xl text-xs font-bold inline-flex items-center gap-2">
+            <Plus className="w-4 h-4" /> Tạo bộ đề đầu tiên
+          </button>
         </div>
       )}
 
@@ -52,7 +54,7 @@ export function ExamListScreen() {
               key={ex.id}
               exam={ex}
               subjectColor={subjectColor}
-              onOpen={() => {}} // Sprint 03
+              onOpen={() => navigate(`/subjects/${subjectId}/exams/${ex.id}/edit`)}
               onDelete={() => setDeletingExam(ex)}
             />
           ))}
