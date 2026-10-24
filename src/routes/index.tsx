@@ -9,6 +9,8 @@ import { QuizScreen } from '@/features/quiz/QuizScreen';
 import { ResultScreen } from '@/features/quiz/ResultScreen';
 import { GuideScreen } from '@/features/ai-guide/GuideScreen';
 import { TrashScreen } from '@/features/trash/TrashScreen';
+import { MobileImportScreen } from '@/features/mobile/MobileImportScreen';
+import { MobileQuizScreen } from '@/features/mobile/MobileQuizScreen';
 
 export const router = createHashRouter([
   {
@@ -25,6 +27,11 @@ export const router = createHashRouter([
       { path: 'results/:attemptId', element: <ResultScreen /> },
       { path: 'guide', element: <GuideScreen /> },
       { path: 'trash', element: <TrashScreen /> },
+      
+      // Mobile Routes
+      { path: 'mobile-import', element: <MobileImportScreen /> },
+      { path: 'quiz-mobile', element: <MobileQuizScreen /> },
+      
       { path: '*', element: <Navigate to="/" replace /> },
     ],
   },

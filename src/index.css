@@ -26,3 +26,27 @@ body {
   background: var(--app-bg);
   color: var(--ink-800);
 }
+
+/* ==========================================
+   MOBILE OVERRIDES (dựa vào class .is-mobile trên thẻ html)
+   ========================================== */
+.is-mobile .neu-shell,
+.is-mobile .neu-card,
+.is-mobile .neu-pill,
+.is-mobile .neu-pill-active,
+.is-mobile .neu-icon-btn,
+.is-mobile .neu-dark-btn {
+  box-shadow: none !important;
+  border: 1px solid var(--border-strong) !important;
+}
+
+.is-mobile .neu-card-inset {
+  box-shadow: none !important;
+  border: 1px solid var(--border-strong) !important;
+  background: var(--neu-surface-raised);
+}
+
+/* Nền phẳng hơn cho mobile */
+.is-mobile {
+  background-color: var(--app-bg) !important;
+}
