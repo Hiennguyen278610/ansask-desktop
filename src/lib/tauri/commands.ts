@@ -36,18 +36,6 @@ export interface TrashItemDto {
   deletedByParent: boolean;
 }
 
-export interface TrashItemDto {
-  id: string;
-  kind: "subject" | "exam";
-  name: string;
-  subjectId?: string;
-  subjectName?: string;
-  deletedAt: string;
-  questionCount: number;
-  attemptCount: number;
-  deletedByParent: boolean;
-}
-
 export function settingGet(key: string): Promise<SettingValueDto> { return invoke('setting_get', { req: { key } }); }
 export function settingSet(key: string, value: string): Promise<SettingValueDto> { return invoke('setting_set', { req: { key, value } }); }
 
@@ -68,12 +56,6 @@ export function attemptSubmit(req: AttemptSubmitReq): Promise<AttemptResultDto> 
 export function attemptList(examId: string): Promise<AttemptSummary[]> { return invoke('attempt_list', { req: { examId } }); }
 export function attemptListAll(): Promise<AttemptSummary[]> { return invoke('attempt_list_all'); }
 export function attemptReview(id: string): Promise<AttemptReviewDto> { return invoke('attempt_review', { req: { id } }); }
-
-export function trashList(): Promise<TrashItemDto[]> { return invoke('trash_list'); }
-export function subjectRestore(id: string, newName?: string): Promise<void> { return invoke('subject_restore', { req: { id, newName } }); }
-export function examRestore(id: string, newName?: string): Promise<void> { return invoke('exam_restore', { req: { id, newName } }); }
-export function trashPurgeItem(kind: "subject" | "exam", id: string): Promise<void> { return invoke('trash_purge_item', { req: { kind, id } }); }
-export function trashEmpty(): Promise<void> { return invoke('trash_empty'); }
 
 export function trashList(): Promise<TrashItemDto[]> { return invoke('trash_list'); }
 export function subjectRestore(id: string, newName?: string): Promise<void> { return invoke('subject_restore', { req: { id, newName } }); }
