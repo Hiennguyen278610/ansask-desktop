@@ -3,19 +3,37 @@ on:
   push:
     branches: [main]
   pull_request:
+
 jobs:
   check:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04 # Ghim cứng để tránh lỗi khi GitHub đổi ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      # Cache Rust để build nhanh hơn
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
       - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22 # Nâng cấp lên Node 22 để hết cảnh báo deprecated
           cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm lint
-      - run: pnpm build
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev patchelf
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Frontend checks
+        run: |
+          pnpm lint
+          pnpm build
+
       - name: Rust checks
         run: |
           cd src-tauri
