@@ -30,8 +30,8 @@ export function QuizScreen() {
   };
 
   return (
-    <div className="space-y-6 animate-fade-in relative pb-10">
-      {/* Sticky Bar */}
+    <div className="space-y-6 animate-fade-in relative pb-20">
+      {/* Sticky Bar (Đã bỏ nút Danh sách câu) */}
       <div className="neu-card rounded-2xl p-4 flex flex-wrap items-center justify-between gap-4 sticky top-2 z-20">
         <div className="flex items-center gap-4">
           <div className="neu-pill px-4 py-2 rounded-xl flex items-center gap-2 text-sm font-bold text-ink-strong">
@@ -46,9 +46,6 @@ export function QuizScreen() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={() => setShowNav(true)} className="neu-pill px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-1.5">
-            <List className="w-4 h-4" /> Danh sách câu
-          </button>
           <button onClick={handleSubmit} disabled={quiz.isSubmitting} className="neu-dark-btn px-6 py-2.5 rounded-xl text-xs sm:text-sm font-bold flex items-center gap-2">
             <CheckCircle2 className="w-4 h-4" /> {quiz.isSubmitting ? 'Đang nộp...' : 'Nộp bài'}
           </button>
@@ -68,6 +65,16 @@ export function QuizScreen() {
           </div>
         ))}
       </div>
+
+      {/* Nút nổi (FAB) */}
+      <button
+        onClick={() => setShowNav(true)}
+        className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]"
+      >
+        <List className="w-5 h-5" />
+        <span className="hidden sm:inline">Danh sách câu</span>
+        <span className="bg-emerald-500 text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{answeredCount}/{total}</span>
+      </button>
 
       <QuestionNavigatorDialog open={showNav} questions={quiz.questions} answers={quiz.answers} onSelect={handleJump} onClose={() => setShowNav(false)} />
       <SubmitWarningDialog open={showWarning} unansweredIndexes={unansweredIndexes} total={total} onBack={() => setShowWarning(false)} onConfirm={quiz.submit} />

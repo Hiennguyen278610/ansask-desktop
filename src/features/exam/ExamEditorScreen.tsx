@@ -1,18 +1,27 @@
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, Save, Plus } from 'lucide-react';
+import { ArrowLeft, Save, Plus, List } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { useExamEditor } from '@/hooks/useExamEditor';
 import { QuestionCardEditor } from './QuestionCardEditor';
 import { SyntaxHighlightedTextarea } from './SyntaxHighlightedTextarea';
+import { QuestionNavigatorDialog } from '@/features/quiz/QuestionNavigatorDialog';
 
 export function ExamEditorScreen() {
   const { subjectId, examId } = useParams();
   const navigate = useNavigate();
   const ed = useExamEditor(examId, subjectId);
+  const [showNav, setShowNav] = useState(false);
+  const questionRefs = useRef<Record<string, HTMLDivElement>>({});
 
   if (ed.isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải đề...</div>;
 
+  const handleJump = (idx: number) => {
+    const qId = ed.questions[idx].id || `q-idx-${idx}`;
+    questionRefs.current[qId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
   return (
-    <div className="space-y-5 flex-1 flex flex-col animate-fade-in">
+    <div className="space-y-5 flex-1 flex flex-col animate-fade-in relative pb-20">
       {/* Header */}
       <div className="neu-card rounded-2xl p-4 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
         <div className="flex-1 flex items-center gap-3">
@@ -45,7 +54,7 @@ export function ExamEditorScreen() {
           </div>
           <div className="flex-1 overflow-y-auto pr-1 space-y-1">
             {ed.questions.map((q, i) => (
-              <div key={i} className="py-1">
+              <div key={q.id || i} className="py-1" ref={el => { if (el) questionRefs.current[q.id || `q-idx-${i}`] = el; }}>
                 <QuestionCardEditor
                   index={i}
                   question={q}
@@ -101,6 +110,23 @@ export function ExamEditorScreen() {
           )}
         </div>
       </div>
+
+      {/* Nút nổi (FAB) */}
+      <button
+        onClick={() => setShowNav(true)}
+        className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]"
+      >
+        <List className="w-5 h-5" />
+        <span className="hidden sm:inline">Danh sách câu</span>
+        <span className="bg-ink-strong text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{ed.questions.length}</span>
+      </button>
+
+      <QuestionNavigatorDialog 
+        open={showNav} 
+        questions={ed.questions} 
+        onSelect={handleJump} 
+        onClose={() => setShowNav(false)} 
+      />
     </div>
   );
 }

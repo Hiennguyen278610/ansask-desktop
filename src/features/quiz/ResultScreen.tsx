@@ -1,11 +1,16 @@
 import { useParams, useNavigate } from 'react-router';
-import { ArrowLeft, CheckCircle2, XCircle } from 'lucide-react';
+import { ArrowLeft, CheckCircle2, XCircle, List } from 'lucide-react';
+import { useState, useRef } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { attemptReview } from '@/lib/tauri/commands';
+import { QuestionNavigatorDialog } from './QuestionNavigatorDialog';
 
 export function ResultScreen() {
   const { attemptId } = useParams();
   const navigate = useNavigate();
+  const [showNav, setShowNav] = useState(false);
+  const questionRefs = useRef<Record<string, HTMLDivElement>>({});
+
   const { data: review, isLoading } = useQuery({
     queryKey: ['attempt', attemptId],
     queryFn: () => attemptReview(attemptId!),
@@ -15,8 +20,16 @@ export function ResultScreen() {
   if (isLoading) return <div className="p-8 text-center text-sm text-slate-500">Đang tải kết quả...</div>;
   if (!review) return <div className="p-8 text-center text-rose-500">Không tìm thấy kết quả.</div>;
 
+  const handleJump = (idx: number) => {
+    const qId = review.questions[idx].questionId;
+    questionRefs.current[qId]?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  };
+
+  // Convert questions to format cho Navigator
+  const navQuestions = review.questions.map(q => ({ id: q.questionId, ask: q.questionText }));
+
   return (
-    <div className="space-y-6 max-w-4xl mx-auto animate-fade-in pb-10">
+    <div className="space-y-6 max-w-4xl mx-auto animate-fade-in pb-20 relative">
       <div className="neu-card rounded-[28px] p-6 sm:p-8 flex flex-col md:flex-row items-center justify-between gap-6">
         <div className="flex items-center gap-5">
           <div className="w-24 h-24 rounded-full neu-pill flex flex-col items-center justify-center border-4 border-ink-strong shrink-0">
@@ -41,7 +54,7 @@ export function ResultScreen() {
       <h3 className="font-bold text-base text-ink-strong mt-8 mb-4">Chi tiết đáp án bài làm</h3>
       <div className="space-y-4">
         {review.questions.map((q, idx) => (
-          <div key={q.questionId} className="neu-card-inset p-5 rounded-2xl">
+          <div key={q.questionId} className="neu-card-inset p-5 rounded-2xl" ref={el => { if (el) questionRefs.current[q.questionId] = el; }}>
             <div className="flex items-start gap-3 mb-4">
               <span className={`px-3 py-1 rounded-xl text-xs font-bold shrink-0 mt-0.5 ${q.isCorrect ? 'bg-emerald-100 text-emerald-700' : 'bg-rose-100 text-rose-700'}`}>Câu {idx + 1}</span>
               <h4 className="text-ink-strong font-semibold text-sm flex-1">{q.questionText}</h4>
@@ -70,6 +83,23 @@ export function ResultScreen() {
           </div>
         ))}
       </div>
+
+      {/* Nút nổi (FAB) */}
+      <button
+        onClick={() => setShowNav(true)}
+        className="fixed bottom-8 right-8 z-40 neu-shell rounded-full h-14 px-5 flex items-center justify-center gap-2 text-ink-strong font-bold hover:scale-105 transition-transform shadow-[8px_8px_20px_rgba(0,0,0,0.15)] dark:shadow-[8px_8px_20px_rgba(0,0,0,0.5)]"
+      >
+        <List className="w-5 h-5" />
+        <span className="hidden sm:inline">Danh sách câu</span>
+        <span className="bg-ink-strong text-white text-[10px] px-2 py-0.5 rounded-full ml-1">{review.totalQuestions}</span>
+      </button>
+
+      <QuestionNavigatorDialog 
+        open={showNav} 
+        questions={navQuestions} 
+        onSelect={handleJump} 
+        onClose={() => setShowNav(false)} 
+      />
     </div>
   );
 }
