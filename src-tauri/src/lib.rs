@@ -1,204 +1,48 @@
 mod commands;
-mod db;
-mod domain;
-mod dto;
-mod error;
-mod parsers;
-mod repositories;
-mod services;
-mod state;
-mod utils;
+pub mod db;
+pub mod error;
+pub mod models;
+pub mod state;
 
-use state::AppState;
-use std::fs;
 use tauri::Manager;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
 pub fn run() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            tracing_subscriber::EnvFilter::try_from_default_env()
-                .unwrap_or_else(|_| tracing_subscriber::EnvFilter::new("info")),
-        )
-        .try_init()
-        .ok();
-
     tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_clipboard_manager::init())
         .setup(|app| {
-            let app_dir = app
-                .path()
-                .app_data_dir()
-                .map_err(|e| format!("Lỗi app_data_dir: {e}"))?;
-            fs::create_dir_all(&app_dir)?;
-            let db_path = app_dir.join("ansask.db");
-            let pool = db::pool::create_pool(&db_path).map_err(|e| format!("Lỗi DB: {e}"))?;
-            {
-                let mut conn = pool.get().map_err(|e| format!("Pool error: {e}"))?;
-                db::migrations::run(&mut conn).map_err(|e| format!("Migration lỗi: {e}"))?;
-            }
-            app.manage(AppState::new(pool));
+            let dir = app.path().app_data_dir()?;
+            std::fs::create_dir_all(&dir)?;
+            let database = db::open(dir.join("ansask.db"))?;
+            app.manage(database);
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::settings_cmds::setting_get,
-            commands::settings_cmds::setting_set,
-            commands::subject_cmds::subject_list,
-            commands::subject_cmds::subject_create,
-            commands::subject_cmds::subject_update,
-            commands::subject_cmds::subject_delete,
-            commands::exam_cmds::exam_list,
-            commands::exam_cmds::exam_get,
-            commands::exam_cmds::exam_save,
-            commands::exam_cmds::exam_delete,
-            commands::import_cmds::import_parse,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::quiz_cmds::quiz_start,
-            commands::attempt_cmds::attempt_submit,
-            commands::attempt_cmds::attempt_list,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_list_all,
-            commands::attempt_cmds::attempt_review,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
-            commands::trash_cmds::trash_list,
-            commands::trash_cmds::subject_restore,
-            commands::trash_cmds::exam_restore,
-            commands::trash_cmds::trash_purge_item,
-            commands::trash_cmds::trash_empty,
-            commands::stats_cmds::stats_overview,
+            commands::subject_list,
+            commands::subject_create,
+            commands::subject_rename,
+            commands::subject_soft_delete,
+            commands::exam_list,
+            commands::exam_get,
+            commands::exam_create,
+            commands::exam_update,
+            commands::exam_soft_delete,
+            commands::question_list_all,
+            commands::attempt_save,
+            commands::attempt_get,
+            commands::attempt_list,
+            commands::session_save,
+            commands::session_get,
+            commands::session_delete,
+            commands::trash_list,
+            commands::trash_restore,
+            commands::trash_purge,
+            commands::stats_totals,
+            commands::stats_recent_attempts,
+            commands::stats_avg_by_subject
         ])
         .run(tauri::generate_context!())
-        .expect("Lỗi chạy Tauri");
+        .expect("error while running Ansask");
 }
