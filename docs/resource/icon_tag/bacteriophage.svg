@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="28">
+  <polygon points="400,100 530,175 530,325 400,400 270,325 270,175" />
+  <line x1="400" y1="400" x2="400" y2="570" />
+  <line x1="355" y1="455" x2="445" y2="455" />
+  <line x1="355" y1="510" x2="445" y2="510" />
+  <polyline points="360,570 230,620 180,700" />
+  <polyline points="440,570 570,620 620,700" />
+  <polyline points="380,570 290,650 270,710" />
+  <polyline points="420,570 510,650 530,710" />
+</svg>

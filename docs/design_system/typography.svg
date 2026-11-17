@@ -1,0 +1,160 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 2480" width="100%" height="100%" role="img"> <title>Typography Specimen - Quicksans</title> <desc>A comprehensive typography specimen for the Quicksans font, detailing scales, weights, character sets, and usage rules for the design system.</desc> <style> :root { --bg: #FFFFFF; --surface: #F8FAFC; --text: #0F172A; --text-muted: #475569; --border: #E2E8F0; --accent: #2563EB; --font-primary: 'quicksans', 'Quicksand', system-ui, -apple-system, sans-serif; --font-mono: 'Courier New', Courier, monospace; } text { font-family: var(--font-primary); text-rendering: optimizeLegibility; fill: var(--text); } .t-display { font-size: 48px; font-weight: 700; line-height: 56px; letter-spacing: -0.02em; } .t-h1 { font-size: 40px; font-weight: 700; line-height: 48px; letter-spacing: -0.02em; } .t-h2 { font-size: 32px; font-weight: 600; line-height: 40px; letter-spacing: -0.01em; } .t-h3 { font-size: 24px; font-weight: 600; line-height: 32px; letter-spacing: -0.01em; } .t-h4 { font-size: 20px; font-weight: 600; line-height: 28px; letter-spacing: 0; } .t-body-l { font-size: 18px; font-weight: 400; line-height: 28px; letter-spacing: 0; } .t-body-m { font-size: 16px; font-weight: 400; line-height: 24px; letter-spacing: 0; } .t-body-s { font-size: 14px; font-weight: 400; line-height: 20px; letter-spacing: 0; } .t-caption { font-size: 12px; font-weight: 400; line-height: 16px; letter-spacing: 0.04em; } .t-overline { font-size: 12px; font-weight: 600; line-height: 16px; letter-spacing: 0.08em; text-transform: uppercase; } .t-button { font-size: 16px; font-weight: 600; line-height: 24px; letter-spacing: 0.02em; } .t-code { font-family: var(--font-mono); font-size: 14px; font-weight: 400; line-height: 20px; letter-spacing: 0; } .c-muted { fill: var(--text-muted); } .c-accent { fill: var(--accent); } .bg-accent { fill: var(--accent); } .bg-surface { fill: var(--surface); } .stroke-border { stroke: var(--border); fill: none; stroke-width: 1; } .stroke-accent { stroke: var(--accent); fill: none; stroke-width: 1; } .w-300 { font-weight: 300; } .w-400 { font-weight: 400; } .w-500 { font-weight: 500; } .w-600 { font-weight: 600; } .w-700 { font-weight: 700; } </style> <!-- Background --> <rect width="1440" height="2480" fill="var(--bg)"/> <!-- ================= HEADER ================= --> <g id="header" transform="translate(64, 64)"> <text class="t-overline c-accent" y="20">Design System / Foundations</text> <text class="t-display" y="70">Typography</text> <g transform="translate(0, 110)"> <rect x="0" y="0" width="1312" height="120" rx="5" class="bg-surface"/>
+
+<text class="t-overline c-muted" x="24" y="32">Font Family</text>
+<text class="t-h3" x="24" y="60">Quicksans</text>
+<text class="t-body-s c-muted" x="24" y="84">Geometric Sans-serif</text>
+
+<text class="t-overline c-muted" x="280" y="32">Role</text>
+<text class="t-body-m" x="280" y="60">SaaS Dashboard / Editorial</text>
+
+<text class="t-overline c-muted" x="560" y="32">Weights Available</text>
+<text class="t-body-m" x="560" y="60">300, 400, 500, 600, 700</text>
+
+<text class="t-overline c-muted" x="880" y="32">Token Variable</text>
+<text class="t-code c-accent" x="880" y="60">--font-primary</text>
+<text class="t-code c-muted" x="880" y="84" font-size="12px">'quicksans', system-ui, sans-serif</text>
+</g>
+</g>
+<!-- ================= HERO GLYPH ================= --> <g id="glyphs" transform="translate(64, 340)"> <rect x="0" y="0" width="1312" height="280" rx="5" class="stroke-border"/> <text class="t-caption c-muted" x="24" y="32">Hero Glyph</text>
+
+<text x="656" y="190" text-anchor="middle" font-size="160px" font-weight="700" letter-spacing="-0.04em">Aa</text>
+
+<text x="24" y="244" class="t-body-s c-muted">Quicksans Bold (700)</text>
+<text x="1288" y="244" text-anchor="end" class="t-body-s c-muted">A-Z, a-z, 0-9</text>
+</g>
+<!-- ================= CHARACTER SET ================= --> <g id="character-set" transform="translate(64, 660)"> <rect x="0" y="0" width="1312" height="280" rx="5" class="bg-surface"/>
+
+<text class="t-overline c-muted" x="24" y="32">Character Set</text>
+<!-- Uppercase -->
+
+<text class="t-overline c-muted" x="24" y="70" font-size="10px">Uppercase</text>
+<text class="t-body-m w-500" x="24" y="90" letter-spacing="0.02em">A B C D E F G H I J K L M N O P Q R S T U V W X Y Z</text>
+<!-- Lowercase -->
+
+<text class="t-overline c-muted" x="24" y="130" font-size="10px">Lowercase</text>
+<text class="t-body-m w-500" x="24" y="150" letter-spacing="0.02em">a b c d e f g h i j k l m n o p q r s t u v w x y z</text>
+<!-- Numbers -->
+
+<text class="t-overline c-muted" x="24" y="190" font-size="10px">Numbers</text>
+<text class="t-body-m w-500" x="24" y="210" letter-spacing="0.02em">0 1 2 3 4 5 6 7 8 9</text>
+<!-- Punctuation -->
+
+<text class="t-overline c-muted" x="24" y="250" font-size="10px">Punctuation Symbols</text>
+<text class="t-body-m w-500" x="24" y="270" letter-spacing="0.02em">. , : ; ! ? * ( ) [ ] { } @ # $ % + = - _ / </text>
+<!-- Vietnamese Support -->
+
+<text class="t-overline c-accent" x="680" y="70" font-size="10px">Vietnamese Diacritics</text>
+<text class="t-body-m w-500" x="680" y="90" fill="var(--text-muted)">ÀÁẢÃẠ ĂẰẮẲẴẶ ÂẦẤẨẪẬ ĐÈÉẺẼẸ</text>
+<text class="t-body-m w-500" x="680" y="110" fill="var(--text-muted)">ÊỀẾỂỄỆ ÌÍỈĨỊ ÒÓỎÕỌ ÔỒỐỔỖỘ</text>
+<text class="t-body-m w-500" x="680" y="130" fill="var(--text-muted)">ƠỜỚỞỠỢ ÙÚỦŨỤ ƯỪỨỬỮỰ ỲÝỶỸỴ</text>
+<!-- Pangram -->
+
+<text class="t-overline c-muted" x="680" y="190" font-size="10px">Pangram</text>
+<text class="t-body-m w-500" x="680" y="210">Tôi muốn ăn kem. Lập trình viên thích uống cà phê.</text>
+<text class="t-body-m w-500 c-muted" x="680" y="234">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+</g>
+<!-- ================= WEIGHT LADDER ================= --> <g id="weights" transform="translate(64, 980)"> <rect x="0" y="0" width="1312" height="320" rx="5" class="stroke-border"/>
+
+<text class="t-overline c-muted" x="24" y="32">Weight Ladder</text>
+<!-- Light 300 -->
+
+<text class="t-caption c-muted" x="24" y="80">Light 300</text>
+<text class="t-h3 w-300" x="180" y="80">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+<!-- Regular 400 -->
+
+<text class="t-caption c-muted" x="24" y="130">Regular 400</text>
+<text class="t-h3 w-400" x="180" y="130">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+<!-- Medium 500 -->
+
+<text class="t-caption c-muted" x="24" y="180">Medium 500</text>
+<text class="t-h3 w-500" x="180" y="180">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+<!-- SemiBold 600 -->
+
+<text class="t-caption c-muted" x="24" y="230">SemiBold 600</text>
+<text class="t-h3 w-600" x="180" y="230">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+<!-- Bold 700 -->
+
+<text class="t-caption c-muted" x="24" y="280">Bold 700</text>
+<text class="t-h3 w-700" x="180" y="280">Trăm năm trong cõi người ta, chữ tài chữ mệnh khéo là ghét nhau.</text>
+</g>
+<!-- ================= TYPE SCALE ================= --> <g id="scale" transform="translate(64, 1380)"> <rect x="0" y="0" width="1312" height="580" rx="5" class="bg-surface"/>
+
+<text class="t-overline c-muted" x="24" y="32">Type Scale (Ratio 1.25)</text>
+<!-- Table Headers -->
+
+<text class="t-caption c-muted w-600" x="24" y="70">TOKEN</text>
+<text class="t-caption c-muted w-600" x="300" y="70">SAMPLE</text>
+<text class="t-caption c-muted w-600" x="850" y="70">SIZE / LH</text>
+<text class="t-caption c-muted w-600" x="1000" y="70">WEIGHT</text>
+<text class="t-caption c-muted w-600" x="1120" y="70">TRACKING</text>
+<line x1="24" y1="85" x2="1288" y2="85" stroke="var(--border)" stroke-width="1"/> <!-- Display -->
+
+<text class="t-code c-muted" x="24" y="125" font-size="13px">t-display</text>
+<text class="t-display" x="300" y="135">Display</text>
+<text class="t-body-s" x="850" y="125">48px / 56px</text>
+<text class="t-body-s" x="1000" y="125">700</text>
+<text class="t-body-s" x="1120" y="125">-0.02em</text>
+<line x1="24" y1="160" x2="1288" y2="160" stroke="var(--border)" stroke-width="1"/>
+<!-- H1 -->
+
+<text class="t-code c-muted" x="24" y="195" font-size="13px">t-h1</text>
+<text class="t-h1" x="300" y="205">Heading 1</text>
+<text class="t-body-s" x="850" y="195">40px / 48px</text>
+<text class="t-body-s" x="1000" y="195">700</text>
+<text class="t-body-s" x="1120" y="195">-0.02em</text>
+<line x1="24" y1="225" x2="1288" y2="225" stroke="var(--border)" stroke-width="1"/>
+<!-- H2 -->
+
+<text class="t-code c-muted" x="24" y="260" font-size="13px">t-h2</text>
+<text class="t-h2" x="300" y="270">Heading 2</text>
+<text class="t-body-s" x="850" y="260">32px / 40px</text>
+<text class="t-body-s" x="1000" y="260">600</text>
+<text class="t-body-s" x="1120" y="260">-0.01em</text>
+<line x1="24" y1="290" x2="1288" y2="290" stroke="var(--border)" stroke-width="1"/>
+<!-- H3 -->
+
+<text class="t-code c-muted" x="24" y="325" font-size="13px">t-h3</text>
+<text class="t-h3" x="300" y="335">Heading 3</text>
+<text class="t-body-s" x="850" y="325">24px / 32px</text>
+<text class="t-body-s" x="1000" y="325">600</text>
+<text class="t-body-s" x="1120" y="325">-0.01em</text>
+<line x1="24" y1="355" x2="1288" y2="355" stroke="var(--border)" stroke-width="1"/>
+<!-- H4 -->
+
+<text class="t-code c-muted" x="24" y="390" font-size="13px">t-h4</text>
+<text class="t-h4" x="300" y="400">Heading 4</text>
+<text class="t-body-s" x="850" y="390">20px / 28px</text>
+<text class="t-body-s" x="1000" y="390">600</text>
+<text class="t-body-s" x="1120" y="390">0</text>
+<line x1="24" y1="420" x2="1288" y2="420" stroke="var(--border)" stroke-width="1"/>
+<!-- Body L -->
+
+<text class="t-code c-muted" x="24" y="455" font-size="13px">t-body-l</text>
+<text class="t-body-l" x="300" y="465">Body Large</text>
+<text class="t-body-s" x="850" y="455">18px / 28px</text>
+<text class="t-body-s" x="1000" y="455">400</text>
+<text class="t-body-s" x="1120" y="455">0</text>
+<line x1="24" y1="485" x2="1288" y2="485" stroke="var(--border)" stroke-width="1"/>
+<!-- Body M -->
+
+<text class="t-code c-muted" x="24" y="520" font-size="13px">t-body-m</text>
+<text class="t-body-m" x="300" y="530">Body Medium</text>
+<text class="t-body-s" x="850" y="520">16px / 24px</text>
+<text class="t-body-s" x="1000" y="520">400</text>
+<text class="t-body-s" x="1120" y="520">0</text>
+<line x1="24" y1="550" x2="1288" y2="550" stroke="var(--border)" stroke-width="1"/>
+</g>
+<!-- ================= HIERARCHY EXAMPLE ================= --> <g id="hierarchy" transform="translate(64, 2000)"> <rect x="0" y="0" width="1312" height="200" rx="5" class="stroke-border"/>
+
+<text class="t-overline c-muted" x="24" y="32">Hierarchy Example</text>
+<g transform="translate(24, 60)"> <rect x="0" y="0" width="600" height="120" rx="5" fill="var(--surface)" stroke="var(--border)" stroke-width="1"/>
+
+<text class="t-overline c-accent" x="24" y="28">Dashboard Widget</text>
+
+<text class="t-h2" x="24" y="60">Revenue Overview</text>
+
+<text class="t-body-m c-muted" x="24" y="88">Your monthly recurring revenue has increased by 15% compared to last month.</text>
+<rect x="24" y="100" width="120" height="32" rx="5" class="bg-accent"/> <text class="t-button" x="84" y="120" text-anchor="middle" fill="#FFFFFF">View Report</text> </g> <g transform="translate(660, 60)"> <text class="t-overline c-muted" x="0" y="10">Composition Note</text> <text class="t-body-s" x="0" y="30">The combination of multiple typographic styles creates a clear visual hierarchy that guides the user's eye.</text> <text class="t-body-s" x="0" y="50">The overline establishes context, the heading commands attention, and the body text provides necessary details.</text> <text class="t-body-s" x="0" y="70">Buttons and interactive elements use distinct typography to signify their function.</text> </g> </g> <!-- ================= USAGE RULES ================= --> <g id="usage" transform="translate(64, 2240)"> <rect x="0" y="0" width="1312" height="160" rx="5" class="bg-surface"/>
+
+<text class="t-overline c-muted" x="24" y="32">Usage Rules</text>
+<!-- Do's --> <g transform="translate(24, 60)"> <text class="t-h4 c-accent" x="0" y="0">Nên</text> <text class="t-body-s" x="0" y="24">• Dùng tối đa 2-3 cấp chữ trong một khối nội dung.</text> <text class="t-body-s" x="0" y="48">• Dùng line-height 1.5 hoặc 1.6 cho các đoạn văn bản (Body).</text> <text class="t-body-s" x="0" y="72">• Sử dụng weight 600 cho heading để tách biệt với body.</text> <text class="t-body-s" x="0" y="96">• Giữ độ dài dòng (line length) trong khoảng 45-75 ký tự.</text> </g> <!-- Don'ts --> <g transform="translate(680, 60)"> <text class="t-h4 c-accent" x="0" y="0">Không nên</text> <text class="t-body-s" x="0" y="24">• Không viết hoa toàn bộ đoạn văn bản dài.</text> <text class="t-body-s" x="0" y="48">• Không dùng quá 3 weight chữ khác nhau trên cùng một màn hình.</text> <text class="t-body-s" x="0" y="72">• Không dùng letter-spacing âm cho các cỡ chữ nhỏ (dưới 18px).</text> <text class="t-body-s" x="0" y="96">• Không lạm dụng chữ in đậm để nhấn mạnh (hãy dùng màu sắc hoặc vị trí).</text> </g> </g></svg>
