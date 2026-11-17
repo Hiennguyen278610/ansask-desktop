@@ -1,28 +1,18 @@
 import js from '@eslint/js';
+import { defineConfig } from 'eslint/config';
 import globals from 'globals';
-import ts from 'typescript-eslint';
 import reactHooks from 'eslint-plugin-react-hooks';
 import reactRefresh from 'eslint-plugin-react-refresh';
+import tseslint from 'typescript-eslint';
 
-export default ts.config(
+export default defineConfig(
+  { ignores: ['dist', 'src-tauri', 'node_modules'] },
   {
-    ignores: [
-      'dist',
-      'src-tauri/target',
-      'node_modules',
-      'pnpm-lock.yaml',
-      // Tài liệu tham chiếu — không phải code app
-      'docs',
-    ],
-  },
-  js.configs.recommended,
-  ...ts.configs.recommended,
-  {
+    extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ['**/*.{ts,tsx}'],
     languageOptions: {
       ecmaVersion: 2022,
-      sourceType: 'module',
-      globals: { ...globals.browser },
+      globals: globals.browser,
     },
     plugins: {
       'react-hooks': reactHooks,
@@ -30,11 +20,33 @@ export default ts.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      'react-refresh/only-export-components': 'warn',
-      '@typescript-eslint/no-unused-vars': [
-        'warn',
-        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      'react-refresh/only-export-components': ['warn', { allowConstantExport: true }],
+      'no-restricted-imports': [
+        'error',
+        {
+          paths: [
+            {
+              name: '@tauri-apps/api/core',
+              message: 'Chỉ được import @tauri-apps/api/core trong src/shared/api/client.ts.',
+            },
+          ],
+        },
       ],
     },
-  }
+  },
+  {
+    files: ['src/**/*.{ts,tsx}'],
+    languageOptions: {
+      parserOptions: { projectService: true },
+    },
+    rules: {
+      '@typescript-eslint/no-deprecated': 'error',
+    },
+  },
+  {
+    files: ['src/shared/api/client.ts'],
+    rules: {
+      'no-restricted-imports': 'off',
+    },
+  },
 );
