@@ -1,0 +1,218 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 920" width="100%" height="100%">
+  <defs>
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+      <feDropShadow dx="0" dy="4" stdDeviation="8" flood-color="#0F172A" flood-opacity="0.04"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="920" fill="#F8FAFC"/>
+
+  <!-- Main Title -->
+  <text x="600" y="60" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="36" font-weight="900" fill="#0F172A">Design System Palette</text>
+  <text x="600" y="90" text-anchor="middle" font-family="system-ui, -apple-system, sans-serif" font-size="16" fill="#64748B">Hệ thống màu sắc được trích xuất từ ảnh</text>
+
+  <!-- 1. PRIMARY -->
+  <g id="primary">
+    <rect x="100" y="120" width="1000" height="100" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="165" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">PRIMARY</text>
+    <text x="130" y="190" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu chủ đạo cho các thành phần chính</text>
+    <!-- Right block (Grid 5x1) -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <!-- 100 -->
+      <rect x="480" y="140" width="90" height="60" rx="8" fill="#FFE5E5" stroke="#FFCCCC" stroke-width="1"/>
+      <text x="525" y="167" font-size="14" font-weight="bold" fill="#7A0000">100</text>
+      <text x="525" y="183" font-size="11" font-family="monospace" fill="#7A0000">#FFE5E5</text>
+      <!-- 300 -->
+      <rect x="580" y="140" width="90" height="60" rx="8" fill="#FF9999"/>
+      <text x="625" y="167" font-size="14" font-weight="bold" fill="#7A0000">300</text>
+      <text x="625" y="183" font-size="11" font-family="monospace" fill="#7A0000">#FF9999</text>
+      <!-- 500 -->
+      <rect x="680" y="140" width="90" height="60" rx="8" fill="#FF1A1A"/>
+      <text x="725" y="167" font-size="14" font-weight="bold" fill="#FFFFFF">500</text>
+      <text x="725" y="183" font-size="11" font-family="monospace" fill="#FFE5E5">#FF1A1A</text>
+      <!-- 700 -->
+      <rect x="780" y="140" width="90" height="60" rx="8" fill="#CC0000"/>
+      <text x="825" y="167" font-size="14" font-weight="bold" fill="#FFFFFF">700</text>
+      <text x="825" y="183" font-size="11" font-family="monospace" fill="#FFE5E5">#CC0000</text>
+      <!-- 900 -->
+      <rect x="880" y="140" width="90" height="60" rx="8" fill="#7A0000"/>
+      <text x="925" y="167" font-size="14" font-weight="bold" fill="#FFFFFF">900</text>
+      <text x="925" y="183" font-size="11" font-family="monospace" fill="#FFE5E5">#7A0000</text>
+    </g>
+  </g>
+
+  <!-- 2. ACCENT -->
+  <g id="accent">
+    <rect x="100" y="240" width="1000" height="100" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="285" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">ACCENT</text>
+    <text x="130" y="310" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu đối lập tạo điểm nhấn, thu hút sự chú ý</text>
+    <!-- Right block -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <rect x="480" y="260" width="90" height="60" rx="8" fill="#FFEDD5"/>
+      <text x="525" y="287" font-size="14" font-weight="bold" fill="#0F172A">100</text>
+      <text x="525" y="303" font-size="11" font-family="monospace" fill="#475569">#FFEDD5</text>
+      
+      <rect x="580" y="260" width="90" height="60" rx="8" fill="#FDBA74"/>
+      <text x="625" y="287" font-size="14" font-weight="bold" fill="#0F172A">300</text>
+      <text x="625" y="303" font-size="11" font-family="monospace" fill="#475569">#FDBA74</text>
+      
+      <rect x="680" y="260" width="90" height="60" rx="8" fill="#F97316"/>
+      <text x="725" y="287" font-size="14" font-weight="bold" fill="#FFFFFF">500</text>
+      <text x="725" y="303" font-size="11" font-family="monospace" fill="#FFEDD5">#F97316</text>
+      
+      <rect x="780" y="260" width="90" height="60" rx="8" fill="#C2410C"/>
+      <text x="825" y="287" font-size="14" font-weight="bold" fill="#FFFFFF">700</text>
+      <text x="825" y="303" font-size="11" font-family="monospace" fill="#FDBA74">#C2410C</text>
+      
+      <rect x="880" y="260" width="90" height="60" rx="8" fill="#7C2D12"/>
+      <text x="925" y="287" font-size="14" font-weight="bold" fill="#FFFFFF">900</text>
+      <text x="925" y="303" font-size="11" font-family="monospace" fill="#FDBA74">#7C2D12</text>
+    </g>
+  </g>
+
+  <!-- 3. NEUTRAL -->
+  <g id="neutral">
+    <rect x="100" y="360" width="1000" height="160" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="410" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">NEUTRAL</text>
+    <text x="130" y="435" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu trung tính cho nền tảng và văn bản</text>
+    <text x="130" y="455" font-family="system-ui, -apple-system, sans-serif" font-size="12" fill="#94A3B8">Hàng trên: Sắc độ trắng | Hàng dưới: Sắc độ đen</text>
+    <!-- Right block (2 grids of 5x1) -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <!-- White Row -->
+      <rect x="480" y="380" width="90" height="50" rx="8" fill="#FFFFFF" stroke="#E2E8F0" stroke-width="1"/>
+      <text x="525" y="402" font-size="14" font-weight="bold" fill="#0F172A">100</text>
+      <text x="525" y="416" font-size="11" font-family="monospace" fill="#475569">#FFFFFF</text>
+      
+      <rect x="580" y="380" width="90" height="50" rx="8" fill="#FAFAFA" stroke="#E2E8F0" stroke-width="1"/>
+      <text x="625" y="402" font-size="14" font-weight="bold" fill="#0F172A">80</text>
+      <text x="625" y="416" font-size="11" font-family="monospace" fill="#475569">#FAFAFA</text>
+      
+      <rect x="680" y="380" width="90" height="50" rx="8" fill="#F5F5F5"/>
+      <text x="725" y="402" font-size="14" font-weight="bold" fill="#0F172A">60</text>
+      <text x="725" y="416" font-size="11" font-family="monospace" fill="#475569">#F5F5F5</text>
+      
+      <rect x="780" y="380" width="90" height="50" rx="8" fill="#EFEFEF"/>
+      <text x="825" y="402" font-size="14" font-weight="bold" fill="#0F172A">40</text>
+      <text x="825" y="416" font-size="11" font-family="monospace" fill="#475569">#EFEFEF</text>
+      
+      <rect x="880" y="380" width="90" height="50" rx="8" fill="#E5E5E5"/>
+      <text x="925" y="402" font-size="14" font-weight="bold" fill="#0F172A">20</text>
+      <text x="925" y="416" font-size="11" font-family="monospace" fill="#475569">#E5E5E5</text>
+
+      <!-- Black Row -->
+      <rect x="480" y="450" width="90" height="50" rx="8" fill="#000000"/>
+      <text x="525" y="472" font-size="14" font-weight="bold" fill="#FFFFFF">100</text>
+      <text x="525" y="486" font-size="11" font-family="monospace" fill="#CBD5E1">#000000</text>
+      
+      <rect x="580" y="450" width="90" height="50" rx="8" fill="#0A0A0A"/>
+      <text x="625" y="472" font-size="14" font-weight="bold" fill="#FFFFFF">80</text>
+      <text x="625" y="486" font-size="11" font-family="monospace" fill="#CBD5E1">#0A0A0A</text>
+      
+      <rect x="680" y="450" width="90" height="50" rx="8" fill="#141414"/>
+      <text x="725" y="472" font-size="14" font-weight="bold" fill="#FFFFFF">60</text>
+      <text x="725" y="486" font-size="11" font-family="monospace" fill="#CBD5E1">#141414</text>
+      
+      <rect x="780" y="450" width="90" height="50" rx="8" fill="#1F1F1F"/>
+      <text x="825" y="472" font-size="14" font-weight="bold" fill="#FFFFFF">40</text>
+      <text x="825" y="486" font-size="11" font-family="monospace" fill="#CBD5E1">#1F1F1F</text>
+      
+      <rect x="880" y="450" width="90" height="50" rx="8" fill="#292929"/>
+      <text x="925" y="472" font-size="14" font-weight="bold" fill="#FFFFFF">20</text>
+      <text x="925" y="486" font-size="11" font-family="monospace" fill="#CBD5E1">#292929</text>
+    </g>
+  </g>
+
+  <!-- 4. SUCCESS -->
+  <g id="success">
+    <rect x="100" y="540" width="1000" height="100" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="585" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">SUCCESS</text>
+    <text x="130" y="610" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu ngữ nghĩa cho trạng thái thành công</text>
+    <!-- Right block -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <rect x="480" y="560" width="90" height="60" rx="8" fill="#DCFCE7"/>
+      <text x="525" y="587" font-size="14" font-weight="bold" fill="#0F172A">100</text>
+      <text x="525" y="603" font-size="11" font-family="monospace" fill="#475569">#DCFCE7</text>
+      
+      <rect x="580" y="560" width="90" height="60" rx="8" fill="#86EFAC"/>
+      <text x="625" y="587" font-size="14" font-weight="bold" fill="#0F172A">300</text>
+      <text x="625" y="603" font-size="11" font-family="monospace" fill="#475569">#86EFAC</text>
+      
+      <rect x="680" y="560" width="90" height="60" rx="8" fill="#22C55E"/>
+      <text x="725" y="587" font-size="14" font-weight="bold" fill="#FFFFFF">500</text>
+      <text x="725" y="603" font-size="11" font-family="monospace" fill="#DCFCE7">#22C55E</text>
+      
+      <rect x="780" y="560" width="90" height="60" rx="8" fill="#15803D"/>
+      <text x="825" y="587" font-size="14" font-weight="bold" fill="#FFFFFF">700</text>
+      <text x="825" y="603" font-size="11" font-family="monospace" fill="#86EFAC">#15803D</text>
+      
+      <rect x="880" y="560" width="90" height="60" rx="8" fill="#14532D"/>
+      <text x="925" y="587" font-size="14" font-weight="bold" fill="#FFFFFF">900</text>
+      <text x="925" y="603" font-size="11" font-family="monospace" fill="#86EFAC">#14532D</text>
+    </g>
+  </g>
+
+  <!-- 5. WARNING -->
+  <g id="warning">
+    <rect x="100" y="660" width="1000" height="100" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="705" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">WARNING</text>
+    <text x="130" y="730" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu ngữ nghĩa cho cảnh báo, rủi ro</text>
+    <!-- Right block -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <rect x="480" y="680" width="90" height="60" rx="8" fill="#FEF3C7"/>
+      <text x="525" y="707" font-size="14" font-weight="bold" fill="#0F172A">100</text>
+      <text x="525" y="723" font-size="11" font-family="monospace" fill="#475569">#FEF3C7</text>
+      
+      <rect x="580" y="680" width="90" height="60" rx="8" fill="#FCD34D"/>
+      <text x="625" y="707" font-size="14" font-weight="bold" fill="#0F172A">300</text>
+      <text x="625" y="723" font-size="11" font-family="monospace" fill="#475569">#FCD34D</text>
+      
+      <rect x="680" y="680" width="90" height="60" rx="8" fill="#F59E0B"/>
+      <text x="725" y="707" font-size="14" font-weight="bold" fill="#0F172A">500</text>
+      <text x="725" y="723" font-size="11" font-family="monospace" fill="#0F172A">#F59E0B</text>
+      
+      <rect x="780" y="680" width="90" height="60" rx="8" fill="#B45309"/>
+      <text x="825" y="707" font-size="14" font-weight="bold" fill="#FFFFFF">700</text>
+      <text x="825" y="723" font-size="11" font-family="monospace" fill="#FEF3C7">#B45309</text>
+      
+      <rect x="880" y="680" width="90" height="60" rx="8" fill="#78350F"/>
+      <text x="925" y="707" font-size="14" font-weight="bold" fill="#FFFFFF">900</text>
+      <text x="925" y="723" font-size="11" font-family="monospace" fill="#FCD34D">#78350F</text>
+    </g>
+  </g>
+
+  <!-- 6. DESTROY -->
+  <g id="destroy">
+    <rect x="100" y="780" width="1000" height="100" rx="16" fill="#FFFFFF" filter="url(#shadow)"/>
+    <!-- Left block -->
+    <text x="130" y="825" font-family="system-ui, -apple-system, sans-serif" font-size="22" font-weight="bold" fill="#0F172A">DESTROY</text>
+    <text x="130" y="850" font-family="system-ui, -apple-system, sans-serif" font-size="14" fill="#64748B">Màu ngữ nghĩa cho lỗi, hành động xóa</text>
+    <!-- Right block -->
+    <g font-family="system-ui, -apple-system, sans-serif" text-anchor="middle">
+      <rect x="480" y="800" width="90" height="60" rx="8" fill="#FEE2E2"/>
+      <text x="525" y="827" font-size="14" font-weight="bold" fill="#0F172A">100</text>
+      <text x="525" y="843" font-size="11" font-family="monospace" fill="#475569">#FEE2E2</text>
+      
+      <rect x="580" y="800" width="90" height="60" rx="8" fill="#FCA5A5"/>
+      <text x="625" y="827" font-size="14" font-weight="bold" fill="#0F172A">300</text>
+      <text x="625" y="843" font-size="11" font-family="monospace" fill="#475569">#FCA5A5</text>
+      
+      <rect x="680" y="800" width="90" height="60" rx="8" fill="#EF4444"/>
+      <text x="725" y="827" font-size="14" font-weight="bold" fill="#FFFFFF">500</text>
+      <text x="725" y="843" font-size="11" font-family="monospace" fill="#FEE2E2">#EF4444</text>
+      
+      <rect x="780" y="800" width="90" height="60" rx="8" fill="#B91C1C"/>
+      <text x="825" y="827" font-size="14" font-weight="bold" fill="#FFFFFF">700</text>
+      <text x="825" y="843" font-size="11" font-family="monospace" fill="#FCA5A5">#B91C1C</text>
+      
+      <rect x="880" y="800" width="90" height="60" rx="8" fill="#7F1D1D"/>
+      <text x="925" y="827" font-size="14" font-weight="bold" fill="#FFFFFF">900</text>
+      <text x="925" y="843" font-size="11" font-family="monospace" fill="#FCA5A5">#7F1D1D</text>
+    </g>
+  </g>
+</svg>

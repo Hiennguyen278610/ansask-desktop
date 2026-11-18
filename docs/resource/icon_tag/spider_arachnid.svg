@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="48">
+  <circle cx="400" cy="335" r="55" />
+  <ellipse cx="400" cy="495" rx="90" ry="110" />
+  <polyline points="355,305 245,195 190,260" />
+  <polyline points="445,305 555,195 610,260" />
+  <polyline points="345,335 195,295 140,390" />
+  <polyline points="455,335 605,295 660,390" />
+  <polyline points="350,365 195,415 150,535" />
+  <polyline points="450,365 605,415 650,535" />
+  <polyline points="365,385 245,515 215,645" />
+  <polyline points="435,385 555,515 585,645" />
+</svg>
