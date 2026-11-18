@@ -8,7 +8,23 @@ permissions:
   contents: write
 
 jobs:
+  prepare-release:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Ensure draft release exists
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "Release for tag $TAG already exists; reusing."
+          else
+            echo "Creating draft release for tag $TAG..."
+            gh release create "$TAG" --draft --title "ansask-desktop $TAG" --notes "Release $TAG" --repo "$GITHUB_REPOSITORY"
+          fi
+
   publish-tauri:
+    needs: prepare-release
     strategy:
       fail-fast: false
       matrix:
@@ -42,20 +58,6 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      # BƯỚC QUAN TRỌNG: Đảm bảo Draft Release tồn tại trước khi build
-      - name: Ensure draft release exists
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG: ${{ github.ref_name }}
-        shell: bash
-        run: |
-          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
-            echo "Draft release for tag $TAG already exists; reusing."
-          else
-            echo "Creating draft release for tag $TAG..."
-            gh release create "$TAG" --draft --title "ansask-desktop $TAG" --notes "Release $TAG"
-          fi
-
       - name: Build and Release
         uses: tauri-apps/tauri-action@v1
         env:
@@ -69,7 +71,7 @@ jobs:
           args: ${{ matrix.args }}
 
   publish-android:
-    needs: publish-tauri
+    needs: prepare-release
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
@@ -105,14 +107,48 @@ jobs:
       - name: Install frontend dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build Android APK
-        run: pnpm tauri android build --apk --debug --target aarch64 --ci
+      - name: Build Android Release APK
+        run: pnpm tauri android build --apk --target aarch64 --ci
 
-      - name: Upload APK to Release
+      - name: Sign and Upload APK to Release
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG: ${{ github.ref_name }}
         run: |
-          APK_OUT="ansask_${TAG}_android_aarch64.apk"
-          cp src-tauri/gen/android/app/build/outputs/apk/universal/debug/app-universal-debug.apk "$APK_OUT"
-          gh release upload "$TAG" "$APK_OUT" --clobber --repo "$GITHUB_REPOSITORY"
+          UNSIGNED_APK="$(find src-tauri/gen/android/app/build/outputs/apk -type f -name '*.apk' | head -n 1)"
+          if [ -z "$UNSIGNED_APK" ]; then
+            echo "No APK found!"
+            exit 1
+          fi
+          ALIGNED_APK="aligned.apk"
+          SIGNED_APK="ansask_${TAG}_android_aarch64.apk"
+
+          keytool -genkeypair -v \
+            -keystore release.keystore \
+            -alias ansask \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -storepass ansask123 -keypass ansask123 \
+            -dname "CN=Ansask, OU=Mobile, O=Ansask, L=VN, S=VN, C=VN"
+
+          "$ANDROID_HOME/build-tools/36.0.0/zipalign" -p -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+          "$ANDROID_HOME/build-tools/36.0.0/apksigner" sign \
+            --ks release.keystore \
+            --ks-pass pass:ansask123 \
+            --key-pass pass:ansask123 \
+            --ks-key-alias ansask \
+            --out "$SIGNED_APK" \
+            "$ALIGNED_APK"
+
+          gh release upload "$TAG" "$SIGNED_APK" --clobber --repo "$GITHUB_REPOSITORY"
+
+  finalize-release:
+    needs: [publish-tauri, publish-android]
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          gh release edit "$TAG" --draft=false --latest --repo "$GITHUB_REPOSITORY"
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY"
