@@ -7,6 +7,7 @@
 }
 
 :root {
+  color-scheme: light;
   /* Typography */
   --font-primary: 'quicksans', 'Quicksand', system-ui, -apple-system, sans-serif;
   --font-mono: 'Courier New', Courier, monospace;
@@ -103,6 +104,7 @@
 }
 
 .dark {
+  color-scheme: dark;
   --bg: var(--neutral-b-80);
   --surface: var(--neutral-b-60);
   --surface-muted: var(--neutral-b-40);

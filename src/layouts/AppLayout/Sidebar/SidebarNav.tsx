@@ -26,7 +26,7 @@ export function SidebarNav({ collapsed }: { collapsed: boolean }) {
               'flex items-center gap-3 rounded-[var(--radius-md)] px-3 py-2.5 text-sm font-medium transition-colors',
               collapsed && 'justify-center px-2',
               active
-                ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-active-foreground)] font-semibold'
+                ? 'bg-[var(--sidebar-active)] text-[var(--sidebar-active-foreground)] font-semibold shadow-[var(--shadow-elevated)]'
                 : 'text-[var(--text-muted)] hover:bg-[var(--surface-hover)] hover:text-[var(--text)]',
             )}
           >

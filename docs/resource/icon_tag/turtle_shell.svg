@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="28">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="48">
   <path d="M180 480 C180 280, 560 280, 560 480 Z" />
   <path d="M560 455 H635 C675 455, 695 425, 685 395 C675 365, 625 365, 595 395 L555 415" />
   <path d="M235 480 L210 565 H275 L295 480" />

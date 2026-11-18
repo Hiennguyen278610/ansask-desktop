@@ -5,7 +5,11 @@ const ASK_RE = /^\s*ask\s*:(.*)$/i;
 const ANS_CORRECT_RE = /^\s*ans\.\*(.*)$/i;
 const ANS_WRONG_RE = /^\s*ans\.(.*)$/i;
 
-export function parseText(raw: string): Result<DraftQuestion[]> {
+export type DraftParseResult =
+  | { ok: true; value: DraftQuestion[]; errors: ParseError[] }
+  | { ok: false; errors: ParseError[] };
+
+export function parseTextDraft(raw: string): DraftParseResult {
   const lines = raw.replace(/\r\n?/g, '\n').split('\n');
   const questions: DraftQuestion[] = [];
   const errors: ParseError[] = [];
@@ -95,11 +99,14 @@ export function parseText(raw: string): Result<DraftQuestion[]> {
     false,
   );
 
-  if (validationErrors.length > 0) {
-    return { ok: false, errors: validationErrors };
-  }
+  return { ok: true, value: questions, errors: validationErrors };
+}
 
-  return { ok: true, value: questions };
+export function parseText(raw: string): Result<DraftQuestion[]> {
+  const res = parseTextDraft(raw);
+  if (!res.ok) return res;
+  if (res.errors.length > 0) return { ok: false, errors: res.errors };
+  return { ok: true, value: res.value };
 }
 
 export function toText(

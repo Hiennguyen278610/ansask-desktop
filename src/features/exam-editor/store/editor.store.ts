@@ -1,7 +1,7 @@
 import { nanoid } from 'nanoid';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
-import { parseJson, parseText, toJson, toText, type ParseError } from '@/domain/exam-format';
+import { parseJsonDraft, parseTextDraft, toJson, toText, type ParseError } from '@/domain/exam-format';
 import type { DraftExam, DraftQuestion } from '@/domain/types';
 
 function createEmptyQuestion(): DraftQuestion {
@@ -18,6 +18,25 @@ function createEmptyQuestion(): DraftQuestion {
 
 function serialize(questions: DraftQuestion[], format: 'text' | 'json'): string {
   return format === 'text' ? toText(questions) : toJson(questions);
+}
+
+function syncEditorToDraft(s: EditorState): void {
+  const res = s.format === 'text' ? parseTextDraft(s.editorText) : parseJsonDraft(s.editorText);
+  if (!res.ok) {
+    s.parseErrors = res.errors;
+    return;
+  }
+  const prev = s.draft.questions;
+  s.draft.questions = res.value.map((q, qi) => ({
+    uid: prev[qi]?.uid ?? q.uid,
+    content: q.content,
+    options: q.options.map((o, oi) => ({
+      uid: prev[qi]?.options[oi]?.uid ?? o.uid,
+      content: o.content,
+      isCorrect: o.isCorrect,
+    })),
+  }));
+  s.parseErrors = res.errors;
 }
 
 interface EditorState {
@@ -76,6 +95,7 @@ export const useEditorStore = create<EditorState>()(
 
     addQuestion: (afterIndex) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = createEmptyQuestion();
         if (afterIndex === undefined || afterIndex < 0 || afterIndex >= s.draft.questions.length) {
           s.draft.questions.push(q);
@@ -88,6 +108,7 @@ export const useEditorStore = create<EditorState>()(
 
     removeQuestion: (uid) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         s.draft.questions = s.draft.questions.filter((q) => q.uid !== uid);
         s.lastEdited = 'form';
         s.isDirty = true;
@@ -95,6 +116,7 @@ export const useEditorStore = create<EditorState>()(
 
     setQuestionContent: (uid, v) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = s.draft.questions.find((x) => x.uid === uid);
         if (q) {
           q.content = v;
@@ -105,6 +127,7 @@ export const useEditorStore = create<EditorState>()(
 
     addOption: (qUid) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = s.draft.questions.find((x) => x.uid === qUid);
         if (q && q.options.length < 10) {
           q.options.push({ uid: nanoid(), content: '', isCorrect: false });
@@ -115,6 +138,7 @@ export const useEditorStore = create<EditorState>()(
 
     removeOption: (qUid, oUid) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = s.draft.questions.find((x) => x.uid === qUid);
         if (q && q.options.length > 1) {
           q.options = q.options.filter((o) => o.uid !== oUid);
@@ -125,6 +149,7 @@ export const useEditorStore = create<EditorState>()(
 
     setOptionContent: (qUid, oUid, v) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = s.draft.questions.find((x) => x.uid === qUid);
         const o = q?.options.find((x) => x.uid === oUid);
         if (o) {
@@ -136,6 +161,7 @@ export const useEditorStore = create<EditorState>()(
 
     setCorrect: (qUid, oUid) =>
       set((s) => {
+        if (s.lastEdited === 'editor') syncEditorToDraft(s);
         const q = s.draft.questions.find((x) => x.uid === qUid);
         if (q) {
           for (const o of q.options) {
@@ -176,22 +202,7 @@ export const useEditorStore = create<EditorState>()(
     applyEditorParse: () =>
       set((s) => {
         if (s.lastEdited !== 'editor') return;
-        const res = s.format === 'text' ? parseText(s.editorText) : parseJson(s.editorText);
-        if (!res.ok) {
-          s.parseErrors = res.errors;
-          return;
-        }
-        const prev = s.draft.questions;
-        s.draft.questions = res.value.map((q, qi) => ({
-          uid: prev[qi]?.uid ?? q.uid,
-          content: q.content,
-          options: q.options.map((o, oi) => ({
-            uid: prev[qi]?.options[oi]?.uid ?? o.uid,
-            content: o.content,
-            isCorrect: o.isCorrect,
-          })),
-        }));
-        s.parseErrors = [];
+        syncEditorToDraft(s);
       }),
   })),
 );

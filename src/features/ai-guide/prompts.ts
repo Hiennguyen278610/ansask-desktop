@@ -1,7 +1,14 @@
+export const AI_PLATFORMS = [
+  { name: 'Gemini', url: 'https://gemini.google.com/app' },
+  { name: 'ChatGPT', url: 'https://chatgpt.com/' },
+  { name: 'Claude', url: 'https://claude.ai/' },
+  { name: 'DeepSeek', url: 'https://chat.deepseek.com/' },
+] as const;
+
 export const STEPS = [
   {
     title: 'Bước 1:',
-    content: 'Mở các nền tảng AI hỗ trợ đọc tài liệu như Gemini , ChatGPT , Claude  hoặc DeepSeek .',
+    content: 'Mở các nền tảng AI hỗ trợ đọc tài liệu như Gemini, ChatGPT, Claude hoặc DeepSeek.',
   },
   {
     title: 'Bước 2:',

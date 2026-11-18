@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { ChevronRight, History } from 'lucide-react';
 import { HeaderActions } from '@/layouts/AppLayout/MainContent/HeaderSlot';
@@ -6,6 +6,7 @@ import { useAttemptList } from '@/services/attempt/queries';
 import { useSubjectList } from '@/services/subject/queries';
 import { InfiniteGrid } from '@/shared/components/data/InfiniteGrid';
 import { EmptyState } from '@/shared/components/feedback/EmptyState';
+import { Select } from '@/shared/components/ui/select';
 
 export function HistoryPage() {
   const navigate = useNavigate();
@@ -13,24 +14,23 @@ export function HistoryPage() {
   const subjectsQ = useSubjectList();
   const q = useAttemptList({ subjectId: subjectId || undefined });
 
+  const subjectOptions = useMemo(
+    () => [
+      { value: '', label: 'Tất cả môn học' },
+      ...subjectsQ.items.map((s) => ({ value: s.id, label: s.name })),
+    ],
+    [subjectsQ.items],
+  );
+
   return (
     <>
       <HeaderActions>
-        <select
-          aria-label="Lọc theo môn học"
+        <Select
+          ariaLabel="Lọc theo môn học"
           value={subjectId}
-          onChange={(e) => setSubjectId(e.target.value)}
-          className="h-9 rounded-[var(--radius-md)] border bg-transparent px-3 text-sm text-[var(--text)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] cursor-pointer"
-        >
-          <option value="" className="bg-[var(--surface)]">
-            Tất cả môn học
-          </option>
-          {subjectsQ.items.map((s) => (
-            <option key={s.id} value={s.id} className="bg-[var(--surface)]">
-              {s.name}
-            </option>
-          ))}
-        </select>
+          onValueChange={setSubjectId}
+          options={subjectOptions}
+        />
       </HeaderActions>
 
       <InfiniteGrid

@@ -41,7 +41,8 @@ pub fn run() {
             commands::trash_purge,
             commands::stats_totals,
             commands::stats_recent_attempts,
-            commands::stats_avg_by_subject
+            commands::stats_avg_by_subject,
+            commands::open_external_url
         ])
         .run(tauri::generate_context!())
         .expect("error while running Ansask");

@@ -10,7 +10,7 @@ export function AppProviders({ children }: { children: ReactNode }) {
   return (
     <QueryClientProvider client={queryClient}>
       {children}
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-right" richColors toastOptions={{ style: { fontSize: '20px' } }} />
     </QueryClientProvider>
   );
 }

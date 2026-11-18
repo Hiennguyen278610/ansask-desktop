@@ -1,7 +1,8 @@
 import type { DraftQuestion } from '../types';
+import type { DraftParseResult } from './text';
 import { newUid, validateQuestions, type ParseError, type Result } from './validate';
 
-export function parseJson(raw: string): Result<DraftQuestion[]> {
+export function parseJsonDraft(raw: string): DraftParseResult {
   let parsed: unknown;
   try {
     parsed = JSON.parse(raw);
@@ -83,11 +84,14 @@ export function parseJson(raw: string): Result<DraftQuestion[]> {
   }
 
   const validationErrors = validateQuestions(questions, undefined, true);
-  if (validationErrors.length > 0) {
-    return { ok: false, errors: validationErrors };
-  }
+  return { ok: true, value: questions, errors: validationErrors };
+}
 
-  return { ok: true, value: questions };
+export function parseJson(raw: string): Result<DraftQuestion[]> {
+  const res = parseJsonDraft(raw);
+  if (!res.ok) return res;
+  if (res.errors.length > 0) return { ok: false, errors: res.errors };
+  return { ok: true, value: res.value };
 }
 
 export function toJson(

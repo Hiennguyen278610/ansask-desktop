@@ -27,7 +27,8 @@ export function useCreateSubject() {
 export function useRenameSubject() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (p: { id: Id; name: string }) => subjectService.rename(p.id, p.name),
+    mutationFn: (p: { id: Id; name: string; icon?: string }) =>
+      subjectService.rename(p.id, p.name, p.icon),
     onSuccess: () => invalidate(qc, [subjectKeys.lists(), attemptKeys.all, statsKeys.all]),
   });
 }

@@ -1,4 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="28">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" fill="none" stroke="#000000" stroke-width="48">
   <path d="M560 180 C650 240, 610 420, 470 550 C330 680, 190 670, 160 600 C130 530, 210 420, 290 360 C340 320, 310 260, 360 210 C420 150, 500 140, 560 180 Z" />
   <path d="M315 345 C365 370, 390 420, 360 465" />
   <circle cx="450" cy="340" r="45" />

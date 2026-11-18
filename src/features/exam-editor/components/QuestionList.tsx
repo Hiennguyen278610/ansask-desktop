@@ -40,7 +40,7 @@ export const QuestionList = forwardRef<QuestionListHandle>((_, ref) => {
   useImperativeHandle(ref, () => ({ scrollToQuestion }));
 
   return (
-    <section className="flex h-full min-h-0 flex-1 flex-col bg-[var(--bg)]">
+    <section className="flex h-full min-h-0 min-w-0 flex-1 flex-col bg-[var(--bg)]">
       <div className="flex h-11 shrink-0 items-center justify-between bg-[var(--surface)] px-4">
         <span className="text-sm font-semibold text-[var(--text)]">Danh sách câu hỏi</span>
         <Button

@@ -27,7 +27,13 @@ export function PromptCard({ icon, title, content }: PromptCardProps) {
           {icon}
           <span>{title}</span>
         </div>
-        <Button type="button" variant="outline" size="sm" onClick={handleCopy}>
+        <Button
+          type="button"
+          variant="default"
+          size="sm"
+          className="bg-[var(--sidebar-active)] font-bold text-[var(--sidebar-active-foreground)] shadow-[var(--shadow-elevated)] hover:bg-[var(--primary-900)]"
+          onClick={handleCopy}
+        >
           <Copy className="h-3.5 w-3.5" />
           sao chép
         </Button>

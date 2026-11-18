@@ -28,4 +28,40 @@ describe('editor.store', () => {
     expect(useEditorStore.getState().editorText).toBe('invalid question');
     expect(useEditorStore.getState().parseErrors.length).toBeGreaterThan(0);
   });
+
+  it('does not resurrect deleted question when an empty question causes validation errors', () => {
+    const store = useEditorStore.getState();
+    store.init({
+      title: 'Đề 1',
+      questions: [
+        {
+          uid: 'q-old',
+          content: 'Câu cũ',
+          options: [
+            { uid: 'o1', content: 'A', isCorrect: true },
+            { uid: 'o2', content: 'B', isCorrect: false },
+          ],
+        },
+      ],
+    });
+
+    // Add a new empty question in form, sync to editor
+    store.addQuestion();
+    store.syncFromForm();
+    expect(useEditorStore.getState().draft.questions).toHaveLength(2);
+
+    // Delete the old question in editor text, leaving only the empty question
+    store.setEditorText('ask :\nans. \nans. ');
+    store.applyEditorParse();
+    expect(useEditorStore.getState().draft.questions).toHaveLength(1);
+    expect(useEditorStore.getState().draft.questions[0].content).toBe('');
+    expect(useEditorStore.getState().parseErrors.length).toBeGreaterThan(0);
+
+    // Delete the remaining empty question in form; old question must NOT come back
+    const remainingUid = useEditorStore.getState().draft.questions[0].uid;
+    store.removeQuestion(remainingUid);
+    store.syncFromForm();
+    expect(useEditorStore.getState().draft.questions).toHaveLength(0);
+    expect(useEditorStore.getState().editorText).toBe('');
+  });
 });

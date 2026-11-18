@@ -32,4 +32,8 @@
   * {
     border-color: var(--border);
   }
+
+  .lucide {
+    stroke-width: 2.25;
+  }
 }
