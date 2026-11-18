@@ -67,7 +67,7 @@ export function Select({
         aria-controls={listboxId}
         onClick={() => setOpen((prev) => !prev)}
         className={cn(
-          'inline-flex h-9 min-w-[180px] items-center justify-between gap-2 rounded-[var(--radius-md)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--text)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-1 cursor-pointer',
+          'inline-flex h-9 w-full min-w-[180px] items-center justify-between gap-2 rounded-[var(--radius-md)] bg-[var(--surface)] px-3 text-sm font-medium text-[var(--text)] transition-colors hover:bg-[var(--surface-hover)] focus-visible:outline-2 focus-visible:outline-[var(--primary)] focus-visible:outline-offset-1 cursor-pointer',
         )}
       >
         <span className="truncate">{selectedOption ? selectedOption.label : placeholder}</span>

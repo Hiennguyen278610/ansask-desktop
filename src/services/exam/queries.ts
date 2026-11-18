@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ExamInput, ExamSummary, Id, TimeCursor } from '@/domain/types';
 import { useCursorInfiniteQuery } from '@/shared/hooks/useCursorInfiniteQuery';
 import { invalidate } from '../invalidate';
+import { attemptKeys } from '../attempt/keys';
 import { questionService } from '../question/service';
 import { statsKeys } from '../stats/keys';
 import { subjectKeys } from '../subject/keys';
@@ -49,6 +50,21 @@ export function useUpdateExam(subjectId: Id, examId: Id) {
         examKeys.detail(examId),
         examKeys.questions(examId),
         subjectKeys.lists(),
+        statsKeys.all,
+      ]),
+  });
+}
+
+export function useRenameExam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (p: { id: Id; title: string }) => examService.rename(p.id, p.title),
+    onSuccess: (updated) =>
+      invalidate(qc, [
+        examKeys.list(updated.subjectId),
+        examKeys.lists(),
+        examKeys.detail(updated.id),
+        attemptKeys.all,
         statsKeys.all,
       ]),
   });

@@ -1,13 +1,14 @@
 import type { DraftQuestion } from '../types';
 import { newUid, validateQuestions, type ParseError, type Result } from './validate';
 
+const TITLE_RE = /^\s*title\s*:(.*)$/i;
 const ASK_RE = /^\s*ask\s*:(.*)$/i;
 const ANS_CORRECT_RE = /^\s*ans\.\*(.*)$/i;
 const ANS_WRONG_RE = /^\s*ans\.(.*)$/i;
 
 export type DraftParseResult =
-  | { ok: true; value: DraftQuestion[]; errors: ParseError[] }
-  | { ok: false; errors: ParseError[] };
+  | { ok: true; value: DraftQuestion[]; errors: ParseError[]; title?: string }
+  | { ok: false; errors: ParseError[]; title?: string };
 
 export function parseTextDraft(raw: string): DraftParseResult {
   const lines = raw.replace(/\r\n?/g, '\n').split('\n');
@@ -16,6 +17,7 @@ export function parseTextDraft(raw: string): DraftParseResult {
   const questionLines: number[] = [];
   const optionLines: number[][] = [];
 
+  let title: string | undefined;
   let currentQ: DraftQuestion | null = null;
   let lastTarget: 'question' | 'option' | null = null;
 
@@ -25,6 +27,15 @@ export function parseTextDraft(raw: string): DraftParseResult {
 
     if (!line.trim()) {
       continue;
+    }
+
+    if (!currentQ) {
+      const titleMatch = TITLE_RE.exec(line);
+      if (titleMatch) {
+        const parsedTitle = titleMatch[1].trim();
+        if (parsedTitle) title = parsedTitle;
+        continue;
+      }
     }
 
     const askMatch = ASK_RE.exec(line);
@@ -99,20 +110,21 @@ export function parseTextDraft(raw: string): DraftParseResult {
     false,
   );
 
-  return { ok: true, value: questions, errors: validationErrors };
+  return { ok: true, value: questions, errors: validationErrors, title };
 }
 
-export function parseText(raw: string): Result<DraftQuestion[]> {
+export function parseText(raw: string): Result<DraftQuestion[]> & { title?: string } {
   const res = parseTextDraft(raw);
   if (!res.ok) return res;
   if (res.errors.length > 0) return { ok: false, errors: res.errors };
-  return { ok: true, value: res.value };
+  return { ok: true, value: res.value, title: res.title };
 }
 
 export function toText(
   qs: { content: string; options: { content: string; isCorrect: boolean }[] }[],
+  title?: string,
 ): string {
-  return qs
+  const body = qs
     .map((q) => {
       const lines = [`ask : ${q.content}`];
       for (const opt of q.options) {
@@ -121,4 +133,6 @@ export function toText(
       return lines.join('\n');
     })
     .join('\n\n');
+  const trimmedTitle = title?.trim();
+  return trimmedTitle ? `title : ${trimmedTitle}\n\n${body}` : body;
 }

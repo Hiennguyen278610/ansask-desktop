@@ -22,7 +22,7 @@ export function IconPickerDialog({
         <DialogHeader>
           <DialogTitle>Chọn icon nhận diện</DialogTitle>
         </DialogHeader>
-        <div className="mt-4 grid max-h-80 grid-cols-5 gap-2.5 overflow-y-auto pr-1">
+        <div className="mt-4 grid max-h-80 grid-cols-4 gap-2 overflow-y-auto pr-1 sm:grid-cols-5 sm:gap-2.5">
           {SUBJECT_ICONS.map((icon) => {
             const active = icon.key === value;
             return (

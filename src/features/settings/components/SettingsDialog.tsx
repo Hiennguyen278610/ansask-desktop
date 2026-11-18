@@ -21,15 +21,14 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-3xl p-0 overflow-hidden">
-        <DialogHeader className="border-b px-6 py-4">
+        <DialogHeader className="border-b px-4 py-3.5 md:px-6 md:py-4">
           <DialogTitle>Cài đặt</DialogTitle>
         </DialogHeader>
         <TabsPrimitive.Root
           defaultValue="general"
-          orientation="vertical"
-          className="flex h-[26rem] min-h-0"
+          className="flex h-[70vh] max-h-[30rem] min-h-0 flex-col md:h-[26rem] md:flex-row"
         >
-          <TabsPrimitive.List className="flex w-48 shrink-0 flex-col gap-1 bg-[var(--surface-muted)] p-3">
+          <TabsPrimitive.List className="flex w-full shrink-0 flex-row gap-1 overflow-x-auto bg-[var(--surface-muted)] p-2 md:w-48 md:flex-col md:p-3">
             {TABS.map((t) => {
               const Icon = t.icon;
               return (
@@ -37,7 +36,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
                   key={t.value}
                   value={t.value}
                   className={cn(
-                    'flex items-center gap-2.5 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium text-[var(--text-muted)] transition-colors cursor-pointer',
+                    'flex shrink-0 items-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-left text-sm font-medium text-[var(--text-muted)] transition-colors cursor-pointer md:gap-2.5',
                     'hover:bg-[var(--surface-hover)] hover:text-[var(--text)]',
                     'data-[state=active]:bg-[var(--surface)] data-[state=active]:text-[var(--primary-text)]',
                   )}
@@ -49,7 +48,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
             })}
           </TabsPrimitive.List>
 
-          <div className="min-w-0 flex-1 p-6">
+          <div className="min-w-0 flex-1 overflow-y-auto p-4 md:p-6">
             <TabsPrimitive.Content value="general" className="h-full focus:outline-none">
               <GeneralTab />
             </TabsPrimitive.Content>

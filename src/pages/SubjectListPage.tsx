@@ -9,6 +9,7 @@ import { EmptyState } from '@/shared/components/feedback/EmptyState';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { useGridColumns } from '@/shared/hooks/useMobile';
 
 export function SubjectListPage() {
   const [createOpen, setCreateOpen] = useState(false);
@@ -16,11 +17,12 @@ export function SubjectListPage() {
   const debouncedQuery = useDebouncedValue(search, 250);
   const q = useSubjectList(debouncedQuery);
   const del = useDeleteSubject();
+  const gridCols = useGridColumns();
 
   return (
     <>
       <HeaderActions>
-        <div className="relative w-60">
+        <div className="relative min-w-0 flex-1 md:w-60 md:flex-none">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-[var(--text-subtle)]" />
           <Input
             value={search}
@@ -37,7 +39,7 @@ export function SubjectListPage() {
 
       <InfiniteGrid
         items={q.items}
-        columns={3}
+        columns={gridCols}
         rowHeight={144}
         getKey={(s) => s.id}
         renderItem={(s) => <SubjectCard subject={s} onDelete={() => del.mutateAsync(s.id)} />}

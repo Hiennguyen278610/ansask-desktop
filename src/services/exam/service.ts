@@ -10,5 +10,7 @@ export const examService = {
     call<ExamSummary>('exam_create', { req: { subjectId, input } }),
   update: (id: Id, input: ExamInput) =>
     call<ExamSummary>('exam_update', { req: { id, input } }),
+  rename: (id: Id, title: string) =>
+    call<ExamSummary>('exam_rename', { req: { id, title } }),
   softDelete: (id: Id) => call<void>('exam_soft_delete', { req: { id } }),
 };

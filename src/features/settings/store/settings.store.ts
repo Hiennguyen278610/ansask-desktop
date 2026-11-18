@@ -29,7 +29,18 @@ export function useApplySettings() {
   const fontScale = useSettingsStore((s) => s.fontScale);
 
   useEffect(() => {
-    document.documentElement.style.fontSize = `${(18 * fontScale) / 100}px`;
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') {
+      document.documentElement.style.fontSize = `${(18 * fontScale) / 100}px`;
+      return;
+    }
+    const mq = window.matchMedia('(max-width: 767px)');
+    const applyScale = () => {
+      const basePx = mq.matches ? 16 : 18;
+      document.documentElement.style.fontSize = `${(basePx * fontScale) / 100}px`;
+    };
+    applyScale();
+    mq.addEventListener('change', applyScale);
+    return () => mq.removeEventListener('change', applyScale);
   }, [fontScale]);
 
   useEffect(() => {

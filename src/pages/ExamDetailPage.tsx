@@ -3,6 +3,7 @@ import { useNavigate, useParams } from '@tanstack/react-router';
 import { Clock, Download, Eye, EyeOff, Pencil, Play, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ExamQuestionList } from '@/features/exam/components/ExamQuestionList';
+import { RenameExamDialog } from '@/features/exam/components/RenameExamDialog';
 import { useExamIO } from '@/features/exam/hooks/useExamIO';
 import { ExamConfigDialog } from '@/features/exam-taking/components/ExamConfigDialog';
 import { useSessionStore } from '@/features/exam-taking/store/session.store';
@@ -11,12 +12,15 @@ import { useExam, useExamQuestions } from '@/services/exam/queries';
 import { useDeleteSessionDraft, useSessionDraft } from '@/services/session/queries';
 import { GridSkeleton } from '@/shared/components/feedback/GridSkeleton';
 import { Button } from '@/shared/components/ui/button';
+import { useIsMobile } from '@/shared/hooks/useMobile';
 
 export function ExamDetailPage() {
   const { subjectId, examId } = useParams({ from: '/_app/exams/$subjectId/$examId' });
   const navigate = useNavigate();
   const [showAnswers, setShowAnswers] = useState(false);
   const [configOpen, setConfigOpen] = useState(false);
+  const [renameOpen, setRenameOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   const examQ = useExam(examId);
   const questionsQ = useExamQuestions(examId);
@@ -53,36 +57,61 @@ export function ExamDetailPage() {
   return (
     <>
       <HeaderActions>
-        <Button variant="outline" onClick={() => setShowAnswers((v) => !v)}>
-          {showAnswers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-          {showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án'}
-        </Button>
         <Button
           variant="outline"
+          size={isMobile ? 'icon' : 'default'}
+          aria-label="Đổi tên bộ đề"
+          title="Đổi tên bộ đề"
           disabled={!exam}
-          onClick={() => exam && exportExam(exam.id, exam.title, 'txt')}
-        >
-          <Download className="h-4 w-4" />
-          Xuất TXT
-        </Button>
-        <Button
-          variant="outline"
-          disabled={!exam}
-          onClick={() => exam && exportExam(exam.id, exam.title, 'json')}
-        >
-          <Download className="h-4 w-4" />
-          Xuất JSON
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() =>
-            navigate({ to: '/exams/$subjectId/$examId/edit', params: { subjectId, examId } })
-          }
+          onClick={() => setRenameOpen(true)}
         >
           <Pencil className="h-4 w-4" />
-          Sửa đề
+          {!isMobile && <span>Đổi tên</span>}
         </Button>
-        <Button disabled={!exam || exam.questionCount === 0} onClick={() => setConfigOpen(true)}>
+        <Button
+          variant="outline"
+          size={isMobile ? 'icon' : 'default'}
+          aria-label={showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án'}
+          title={showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án'}
+          onClick={() => setShowAnswers((v) => !v)}
+        >
+          {showAnswers ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          {!isMobile && <span>{showAnswers ? 'Ẩn đáp án' : 'Hiện đáp án'}</span>}
+        </Button>
+        {!isMobile && (
+          <>
+            <Button
+              variant="outline"
+              disabled={!exam}
+              onClick={() => exam && exportExam(exam.id, exam.title, 'txt')}
+            >
+              <Download className="h-4 w-4" />
+              Xuất TXT
+            </Button>
+            <Button
+              variant="outline"
+              disabled={!exam}
+              onClick={() => exam && exportExam(exam.id, exam.title, 'json')}
+            >
+              <Download className="h-4 w-4" />
+              Xuất JSON
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() =>
+                navigate({ to: '/exams/$subjectId/$examId/edit', params: { subjectId, examId } })
+              }
+            >
+              <Pencil className="h-4 w-4" />
+              Sửa đề
+            </Button>
+          </>
+        )}
+        <Button
+          className="ml-auto sm:ml-0"
+          disabled={!exam || exam.questionCount === 0}
+          onClick={() => setConfigOpen(true)}
+        >
           <Play className="h-4 w-4" />
           Làm đề
         </Button>
@@ -135,14 +164,17 @@ export function ExamDetailPage() {
       )}
 
       {exam && (
-        <ExamConfigDialog
-          open={configOpen}
-          onOpenChange={setConfigOpen}
-          examId={exam.id}
-          subjectId={subjectId}
-          examTitle={exam.title}
-          total={exam.questionCount}
-        />
+        <>
+          <ExamConfigDialog
+            open={configOpen}
+            onOpenChange={setConfigOpen}
+            examId={exam.id}
+            subjectId={subjectId}
+            examTitle={exam.title}
+            total={exam.questionCount}
+          />
+          <RenameExamDialog exam={renameOpen ? exam : null} onOpenChange={setRenameOpen} />
+        </>
       )}
     </>
   );

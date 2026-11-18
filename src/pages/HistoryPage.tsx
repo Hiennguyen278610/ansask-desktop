@@ -30,6 +30,7 @@ export function HistoryPage() {
           value={subjectId}
           onValueChange={setSubjectId}
           options={subjectOptions}
+          className="w-full md:w-auto"
         />
       </HeaderActions>
 

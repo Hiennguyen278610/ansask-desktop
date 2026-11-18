@@ -13,7 +13,7 @@ export function Sidebar() {
     <>
       <aside
         className={cn(
-          'flex h-full shrink-0 flex-col bg-[var(--surface)] transition-[width] duration-200',
+          'hidden md:flex h-full shrink-0 flex-col bg-[var(--surface)] transition-[width] duration-200',
           collapsed ? 'w-16' : 'w-60',
         )}
       >

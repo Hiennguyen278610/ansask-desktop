@@ -27,8 +27,8 @@ export function FlashcardView({ onFinish }: { onFinish: () => void }) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <div className="min-h-0 flex-1 overflow-y-auto p-6">
-        <div className="mx-auto max-w-2xl rounded-[var(--radius-lg)] bg-[var(--surface)] p-6 shadow-[var(--shadow-elevated)]">
+      <div className="min-h-0 flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
+        <div className="mx-auto max-w-2xl rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 shadow-[var(--shadow-elevated)] md:p-6">
           <div className="flex items-start gap-2.5">
             <span className="shrink-0 rounded-[var(--radius-sm)] bg-[var(--surface-muted)] px-2 py-0.5 text-xs font-semibold text-[var(--text-muted)]">
               Câu {index + 1}
@@ -66,10 +66,21 @@ export function FlashcardView({ onFinish }: { onFinish: () => void }) {
               );
             })}
           </div>
+
+          {/* Mobile: message + confirm button right below question & options so bottom bar never covers it */}
+          <div className="mt-5 flex items-center justify-between gap-3 border-t pt-4 md:hidden">
+            <p className={cn('text-sm font-medium text-[var(--destroy-text)]', !wrongHint && 'invisible')}>
+              Sai rồi, thử lại lần nữa
+            </p>
+            <Button type="button" disabled={selectedId == null} onClick={handleConfirm}>
+              Xác nhận
+            </Button>
+          </div>
         </div>
       </div>
 
-      <footer className="flex h-16 shrink-0 items-center justify-between bg-[var(--surface)] px-6">
+      {/* Desktop footer */}
+      <footer className="hidden h-16 shrink-0 items-center justify-between gap-3 bg-[var(--surface)] px-6 md:flex">
         <p className={cn('text-sm font-medium text-[var(--destroy-text)]', !wrongHint && 'invisible')}>
           Sai rồi, thử lại lần nữa
         </p>

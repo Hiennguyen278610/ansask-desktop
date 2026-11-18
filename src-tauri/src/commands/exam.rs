@@ -181,6 +181,35 @@ pub fn exam_update(db: State<'_, Db>, req: ExamUpdateReq) -> Result<ExamSummary,
     })
 }
 
+#[derive(Deserialize)]
+pub struct ExamRenameReq {
+    id: String,
+    title: String,
+}
+
+#[tauri::command(async)]
+pub fn exam_rename(db: State<'_, Db>, req: ExamRenameReq) -> Result<ExamSummary, AppError> {
+    let title = req.title.trim();
+    if title.is_empty() {
+        return Err(AppError::Validation("Tên đề không được để trống".into()));
+    }
+    let conn = db.0.lock().unwrap();
+    let now = db::now_ms();
+    let changed = conn.execute(
+        "UPDATE exams SET title=?1, updated_at=?2 WHERE id=?3 AND deleted_at IS NULL",
+        params![title, now, req.id],
+    )?;
+    if changed == 0 {
+        return Err(AppError::NotFound);
+    }
+    conn.query_row(
+        "SELECT e.id, e.subject_id, e.title, e.question_count, e.created_at, e.updated_at FROM exams e WHERE e.id=?1",
+        [&req.id],
+        map_exam,
+    )
+    .map_err(Into::into)
+}
+
 #[tauri::command(async)]
 pub fn exam_soft_delete(db: State<'_, Db>, req: IdReq) -> Result<(), AppError> {
     let mut conn = db.0.lock().unwrap();

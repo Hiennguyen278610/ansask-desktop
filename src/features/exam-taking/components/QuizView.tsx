@@ -34,7 +34,7 @@ export const QuizView = forwardRef<QuizViewHandle>((_, ref) => {
   if (!session) return null;
 
   return (
-    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-6">
+    <div ref={scrollRef} className="min-h-0 flex-1 overflow-y-auto p-4 pb-24 md:p-6 md:pb-6">
       <div className="mx-auto max-w-3xl" style={{ height: v.getTotalSize(), position: 'relative' }}>
         {v.getVirtualItems().map((row) => {
           const q = questions[row.index];

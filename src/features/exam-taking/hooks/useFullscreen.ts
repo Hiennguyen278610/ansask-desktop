@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
 import { getCurrentWindow } from '@tauri-apps/api/window';
+import { isMobilePlatform } from '@/shared/hooks/useMobile';
 
 export function useFullscreen() {
   useEffect(() => {
+    if (isMobilePlatform()) return;
     let active = true;
     const setFs = async (flag: boolean) => {
       try {

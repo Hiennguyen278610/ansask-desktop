@@ -10,20 +10,20 @@ export function StatCards({ totals }: { totals: StatsTotals }) {
   ];
 
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
       {cards.map((c) => {
         const Icon = c.icon;
         return (
           <div
             key={c.label}
-            className="flex items-center justify-between rounded-[var(--radius-lg)] bg-[var(--surface)] p-5"
+            className="flex items-center justify-between gap-2 rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 sm:p-5"
           >
-            <div>
-              <p className="text-xs font-medium text-[var(--text-muted)]">{c.label}</p>
-              <p className="mt-1 text-2xl font-bold text-[var(--text)]">{c.value}</p>
+            <div className="min-w-0">
+              <p className="truncate text-xs font-medium text-[var(--text-muted)]">{c.label}</p>
+              <p className="mt-1 text-xl font-bold text-[var(--text)] sm:text-2xl">{c.value}</p>
             </div>
-            <div className="flex h-10 w-10 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-soft)] text-[var(--primary)]">
-              <Icon className="h-5 w-5" />
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-[var(--radius-md)] bg-[var(--primary-soft)] text-[var(--primary)] sm:h-10 sm:w-10">
+              <Icon className="h-4 w-4 sm:h-5 sm:w-5" />
             </div>
           </div>
         );

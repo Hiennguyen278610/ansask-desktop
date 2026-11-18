@@ -28,6 +28,7 @@ pub fn run() {
             commands::exam_get,
             commands::exam_create,
             commands::exam_update,
+            commands::exam_rename,
             commands::exam_soft_delete,
             commands::question_list_all,
             commands::attempt_save,

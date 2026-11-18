@@ -70,11 +70,7 @@ pub fn subject_rename(db: State<'_, Db>, req: SubjectRenameReq) -> Result<Subjec
     if name.is_empty() {
         return Err(AppError::Validation("Tên môn không được để trống".into()));
     }
-    let icon = req
-        .icon
-        .as_deref()
-        .map(str::trim)
-        .filter(|s| !s.is_empty());
+    let icon = req.icon.as_deref().map(str::trim).filter(|s| !s.is_empty());
     let conn = db.0.lock().unwrap();
     let changed = conn.execute(
         "UPDATE subjects SET name=?1, icon=COALESCE(?2, icon) WHERE id=?3 AND deleted_at IS NULL",

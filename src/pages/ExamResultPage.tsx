@@ -115,10 +115,10 @@ export function ExamResultPage() {
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-6 rounded-[var(--radius-lg)] bg-[var(--surface)] p-6 shadow-[var(--shadow-elevated)]">
-        <div className="flex items-center gap-5">
+      <div className="flex flex-col gap-4 rounded-[var(--radius-lg)] bg-[var(--surface)] p-4 shadow-[var(--shadow-elevated)] sm:p-6 md:flex-row md:items-center md:justify-between md:gap-6">
+        <div className="flex items-center gap-4 sm:gap-5">
           <ScoreDonut score={attempt.score} />
-          <div>
+          <div className="min-w-0">
             <h2 className="text-lg font-bold text-[var(--text)]">{attempt.examTitle}</h2>
             <p className="mt-1 text-sm text-[var(--text-muted)]">
               Hoàn thành bài kiểm tra • {attempt.correct}/{attempt.total} câu đúng •{' '}
@@ -139,6 +139,7 @@ export function ExamResultPage() {
           }
           onRetryWrong={handleRetryWrong}
           onPractice={() => setConfigOpen(true)}
+          hideBackOnMobile
         />
       </div>
 
@@ -146,7 +147,7 @@ export function ExamResultPage() {
         <EmptyState title="Không có câu hỏi nào trong bài làm này" />
       ) : (
         <div className="space-y-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="flex items-center gap-2 overflow-x-auto pb-1">
             {filterTabs.map((tab) => {
               const active = filter === tab.key;
               return (
@@ -155,7 +156,7 @@ export function ExamResultPage() {
                   type="button"
                   onClick={() => setFilter(tab.key)}
                   className={cn(
-                    'rounded-[var(--radius-md)] px-3.5 py-1.5 text-sm font-semibold transition-all cursor-pointer',
+                    'shrink-0 whitespace-nowrap rounded-[var(--radius-md)] px-3.5 py-1.5 text-sm font-semibold transition-all cursor-pointer',
                     active
                       ? 'bg-[var(--primary)] text-[var(--primary-foreground)]'
                       : 'border bg-transparent text-[var(--text)] hover:outline-2 hover:outline-[var(--primary)]',

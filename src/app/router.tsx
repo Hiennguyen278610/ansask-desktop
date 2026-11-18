@@ -11,13 +11,16 @@ import { AppLayout } from '@/layouts/AppLayout';
 import { FullscreenLayout } from '@/layouts/FullscreenLayout';
 import { AiGuidePage } from '@/pages/AiGuidePage';
 import { DashboardPage } from '@/pages/DashboardPage';
+import { DonatePage } from '@/pages/DonatePage';
 import { ExamDetailPage } from '@/pages/ExamDetailPage';
 import { ExamEditorPage } from '@/pages/ExamEditorPage';
 import { ExamListPage } from '@/pages/ExamListPage';
 import { ExamResultPage } from '@/pages/ExamResultPage';
 import { ExamTakingPage } from '@/pages/ExamTakingPage';
 import { HistoryPage } from '@/pages/HistoryPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 import { SubjectListPage } from '@/pages/SubjectListPage';
+import { TrashPage } from '@/pages/TrashPage';
 import { examKeys } from '@/services/exam/keys';
 import { examService } from '@/services/exam/service';
 import { subjectKeys } from '@/services/subject/keys';
@@ -149,6 +152,32 @@ const guideRoute = createRoute({
   staticData: { crumb: () => 'Hướng dẫn AI' },
 });
 
+const settingsRoute = createRoute({
+  getParentRoute: () => appLayoutRoute,
+  path: '/settings',
+  staticData: { crumb: () => 'Cài đặt' },
+});
+
+const settingsIndexRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: '/',
+  component: SettingsPage,
+});
+
+const settingsTrashRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: 'trash',
+  component: TrashPage,
+  staticData: { crumb: () => 'Thùng rác' },
+});
+
+const settingsDonateRoute = createRoute({
+  getParentRoute: () => settingsRoute,
+  path: 'donate',
+  component: DonatePage,
+  staticData: { crumb: () => 'Ủng hộ' },
+});
+
 const takeRoute = createRoute({
   getParentRoute: () => fullscreenLayoutRoute,
   path: '/take',
@@ -173,6 +202,7 @@ const routeTree = rootRoute.addChildren([
     ]),
     historyRoute,
     guideRoute,
+    settingsRoute.addChildren([settingsIndexRoute, settingsTrashRoute, settingsDonateRoute]),
   ]),
   fullscreenLayoutRoute.addChildren([takeRoute]),
 ]);

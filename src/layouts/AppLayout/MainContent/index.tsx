@@ -17,7 +17,10 @@ export function MainContent() {
           {!custom && <PageHeader slotRef={setSlot} />}
           <div
             ref={setScrollEl}
-            className={cn('min-h-0 flex-1', custom ? 'overflow-hidden' : 'overflow-y-auto p-6')}
+            className={cn(
+              'min-h-0 flex-1',
+              custom ? 'overflow-hidden' : 'overflow-y-auto p-4 pb-24 md:p-6 md:pb-6',
+            )}
           >
             <Outlet />
           </div>

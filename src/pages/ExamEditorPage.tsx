@@ -9,12 +9,16 @@ import { QuestionList, type QuestionListHandle } from '@/features/exam-editor/co
 import { useEditorStore } from '@/features/exam-editor/store/editor.store';
 import { useCreateExam, useExam, useExamQuestions, useUpdateExam } from '@/services/exam/queries';
 import { ConfirmDialog } from '@/shared/components/feedback/ConfirmDialog';
+import { EmptyState } from '@/shared/components/feedback/EmptyState';
+import { Button } from '@/shared/components/ui/button';
+import { useIsMobile } from '@/shared/hooks/useMobile';
 
 export function ExamEditorPage({ mode }: { mode: 'create' | 'edit' }) {
   const params = useParams({ strict: false }) as { subjectId: string; examId?: string };
   const subjectId = params.subjectId;
   const examId = params.examId;
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const questionListRef = useRef<QuestionListHandle>(null);
   const initializedRef = useRef(false);
@@ -146,6 +150,30 @@ export function ExamEditorPage({ mode }: { mode: 'create' | 'edit' }) {
       });
     }
   };
+
+  if (isMobile) {
+    return (
+      <div className="flex h-full items-center justify-center p-6">
+        <EmptyState
+          title="Không hỗ trợ tạo hoặc sửa đề trên di động"
+          description="Trên điện thoại, bạn chỉ có thể nhập bộ đề (TXT/JSON) từ máy tính để luyện tập."
+          action={
+            <Button
+              type="button"
+              onClick={() =>
+                navigate({
+                  to: mode === 'edit' && examId ? '/exams/$subjectId/$examId' : '/exams/$subjectId',
+                  params: mode === 'edit' && examId ? { subjectId, examId } : { subjectId },
+                })
+              }
+            >
+              Quay lại
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="flex h-full flex-col overflow-hidden">

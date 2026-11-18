@@ -11,6 +11,7 @@ import { EmptyState } from '@/shared/components/feedback/EmptyState';
 import { Button } from '@/shared/components/ui/button';
 import { Input } from '@/shared/components/ui/input';
 import { useDebouncedValue } from '@/shared/hooks/useDebouncedValue';
+import { useGridColumns, useIsMobile } from '@/shared/hooks/useMobile';
 
 export function ExamListPage() {
   const { subjectId } = useParams({ from: '/_app/exams/$subjectId' });
@@ -20,11 +21,13 @@ export function ExamListPage() {
   const q = useExamList(subjectId, debouncedQuery);
   const del = useDeleteExam();
   const { importExam, isImporting, importErrors, clearImportErrors } = useExamIO(subjectId);
+  const isMobile = useIsMobile();
+  const gridCols = useGridColumns();
 
   return (
     <>
       <HeaderActions>
-        <div className="relative w-60">
+        <div className="relative min-w-0 flex-1 md:w-60 md:flex-none">
           <Search className="pointer-events-none absolute top-1/2 left-2.5 h-4 w-4 -translate-y-1/2 text-[var(--text-subtle)]" />
           <Input
             value={search}
@@ -33,19 +36,25 @@ export function ExamListPage() {
             className="pl-8"
           />
         </div>
-        <Button variant="outline" onClick={importExam} disabled={isImporting}>
+        <Button
+          variant={isMobile ? 'default' : 'outline'}
+          onClick={importExam}
+          disabled={isImporting}
+        >
           <Upload className="h-4 w-4" />
           Nhập bộ đề
         </Button>
-        <Button onClick={() => navigate({ to: '/exams/$subjectId/new', params: { subjectId } })}>
-          <Plus className="h-4 w-4" />
-          Tạo đề
-        </Button>
+        {!isMobile && (
+          <Button onClick={() => navigate({ to: '/exams/$subjectId/new', params: { subjectId } })}>
+            <Plus className="h-4 w-4" />
+            Tạo đề
+          </Button>
+        )}
       </HeaderActions>
 
       <InfiniteGrid
         items={q.items}
-        columns={3}
+        columns={gridCols}
         rowHeight={144}
         getKey={(e) => e.id}
         renderItem={(e) => <ExamCard exam={e} onDelete={() => del.mutateAsync(e.id)} />}
@@ -60,7 +69,9 @@ export function ExamListPage() {
             description={
               debouncedQuery.trim()
                 ? 'Thử tìm với từ khóa khác.'
-                : 'Bạn có thể nhập nhiều bộ đề từ file TXT/JSON hoặc tạo đề mới.'
+                : isMobile
+                  ? 'Nhấn “Nhập bộ đề” để nhập bộ đề TXT hoặc JSON từ máy tính.'
+                  : 'Bạn có thể nhập nhiều bộ đề từ file TXT/JSON hoặc tạo đề mới.'
             }
           />
         }

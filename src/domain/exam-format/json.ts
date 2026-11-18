@@ -13,17 +13,28 @@ export function parseJsonDraft(raw: string): DraftParseResult {
     };
   }
 
-  if (!Array.isArray(parsed)) {
+  let title: string | undefined;
+  let items: unknown[];
+
+  if (Array.isArray(parsed)) {
+    items = parsed;
+  } else if (parsed && typeof parsed === 'object' && Array.isArray((parsed as { questions?: unknown }).questions)) {
+    const obj = parsed as { title?: unknown; questions: unknown[] };
+    if (typeof obj.title === 'string' && obj.title.trim()) {
+      title = obj.title.trim();
+    }
+    items = obj.questions;
+  } else {
     return {
       ok: false,
-      errors: [{ path: '$', message: 'Dữ liệu JSON gốc phải là một mảng.' }],
+      errors: [{ path: '$', message: 'Dữ liệu JSON gốc phải là một mảng hoặc object chứa questions.' }],
     };
   }
 
   const errors: ParseError[] = [];
   const questions: DraftQuestion[] = [];
 
-  parsed.forEach((item, qi) => {
+  items.forEach((item, qi) => {
     const qPath = `[${qi}]`;
     if (!item || typeof item !== 'object' || Array.isArray(item)) {
       errors.push({ path: qPath, questionIndex: qi, message: `${qPath}: Phần tử phải là object.` });
@@ -84,22 +95,25 @@ export function parseJsonDraft(raw: string): DraftParseResult {
   }
 
   const validationErrors = validateQuestions(questions, undefined, true);
-  return { ok: true, value: questions, errors: validationErrors };
+  return { ok: true, value: questions, errors: validationErrors, title };
 }
 
-export function parseJson(raw: string): Result<DraftQuestion[]> {
+export function parseJson(raw: string): Result<DraftQuestion[]> & { title?: string } {
   const res = parseJsonDraft(raw);
   if (!res.ok) return res;
   if (res.errors.length > 0) return { ok: false, errors: res.errors };
-  return { ok: true, value: res.value };
+  return { ok: true, value: res.value, title: res.title };
 }
 
 export function toJson(
   qs: { content: string; options: { content: string; isCorrect: boolean }[] }[],
+  title?: string,
 ): string {
-  const payload = qs.map((q) => ({
+  const questions = qs.map((q) => ({
     ask: q.content,
     answer: q.options.map((o) => (o.isCorrect ? { true: o.content } : { false: o.content })),
   }));
+  const trimmedTitle = title?.trim();
+  const payload = trimmedTitle ? { title: trimmedTitle, questions } : questions;
   return JSON.stringify(payload, null, 2);
 }

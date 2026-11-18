@@ -33,7 +33,16 @@ export function TakingHeader({
 
   return (
     <>
-      <header className="flex h-14 shrink-0 items-center justify-between gap-4 bg-[var(--surface)] px-6">
+      {/* Mobile Header: progress bar only */}
+      <header className="flex shrink-0 items-center gap-3 bg-[var(--surface)] px-4 pt-10 pb-3 md:hidden">
+        <Progress value={pct} className="flex-1" />
+        <span className="shrink-0 text-xs font-semibold text-[var(--text-muted)]">
+          {answeredCount}/{total}
+        </span>
+      </header>
+
+      {/* Desktop Header */}
+      <header className="hidden h-14 shrink-0 items-center justify-between gap-4 bg-[var(--surface)] px-6 md:flex">
         <div className="flex items-center gap-6">
           <div className="flex items-center gap-2 text-[var(--text)]">
             <Lock className="h-4 w-4 text-[var(--primary-text)]" />
@@ -71,6 +80,39 @@ export function TakingHeader({
           </Button>
         </div>
       </header>
+
+      {/* Mobile Floating Bottom Bar */}
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] md:hidden">
+        <div className="pointer-events-auto mx-auto flex max-w-md items-center justify-between gap-2 rounded-2xl bg-[var(--surface)] px-4 py-2.5 shadow-[0_8px_28px_rgba(0,0,0,0.12)] dark:shadow-[0_8px_28px_rgba(0,0,0,0.45)]">
+          <div className="flex items-center gap-2 text-[var(--text)]">
+            <Lock className="h-4 w-4 text-[var(--primary-text)]" />
+            <Timer elapsedSecBase={session.elapsedSecBase} resumedAt={session.resumedAt} />
+          </div>
+
+          <div className="flex items-center gap-2">
+            {session.mode === 'quiz' && (
+              <Button type="button" variant="outline" size="sm" onClick={() => setGridOpen(true)}>
+                <List className="h-4 w-4" />
+                <span>{total}</span>
+              </Button>
+            )}
+            <Button
+              type="button"
+              variant="outline"
+              size="icon"
+              onClick={onSaveAndExit}
+              disabled={isSavingDraft || isSubmitting}
+              aria-label="Lưu & thoát"
+              title="Lưu & thoát"
+            >
+              <Save className="h-4 w-4" />
+            </Button>
+            <Button type="button" size="sm" onClick={onSubmit} disabled={isSubmitting || isSavingDraft}>
+              Nộp bài
+            </Button>
+          </div>
+        </div>
+      </div>
 
       {session.mode === 'quiz' && (
         <IndexGridDialog

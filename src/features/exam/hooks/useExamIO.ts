@@ -22,11 +22,45 @@ export interface ImportFileError {
 }
 
 function getFileName(filePath: string): string {
-  return filePath.split(/[/\\]/).pop() ?? 'Bộ đề mới';
+  const rawName = filePath.split(/[/\\]/).pop() ?? 'Bộ đề mới';
+  try {
+    return decodeURIComponent(rawName);
+  } catch {
+    return rawName;
+  }
 }
 
 function extractTitle(filePath: string): string {
-  return getFileName(filePath).replace(/\.(txt|json)$/i, '') || 'Bộ đề mới';
+  const name = getFileName(filePath).replace(/\.(txt|json)$/i, '');
+  if (!name || /^document:\d+$/i.test(name)) {
+    return 'Bộ đề mới';
+  }
+  return name;
+}
+
+function isJsonContent(fileName: string, raw: string): boolean {
+  if (fileName.toLowerCase().endsWith('.json')) return true;
+  if (fileName.toLowerCase().endsWith('.txt')) return false;
+  const trimmed = raw.trimStart();
+  return trimmed.startsWith('{') || trimmed.startsWith('[');
+}
+
+function pickFilesFallback(): Promise<{ name: string; raw: string }[]> {
+  return new Promise((resolve) => {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.txt,.json';
+    input.multiple = true;
+    input.onchange = async () => {
+      const files = Array.from(input.files ?? []);
+      const loaded = await Promise.all(
+        files.map(async (f) => ({ name: f.name, raw: await f.text() })),
+      );
+      resolve(loaded);
+    };
+    input.oncancel = () => resolve([]);
+    input.click();
+  });
 }
 
 export function useExamIO(subjectId: Id) {
@@ -35,32 +69,26 @@ export function useExamIO(subjectId: Id) {
   const [importErrors, setImportErrors] = useState<ImportFileError[] | null>(null);
   const [isImporting, setIsImporting] = useState(false);
 
-  const importExam = async () => {
-    const selected = await open({
-      multiple: true,
-      filters: [{ name: 'Đề', extensions: ['txt', 'json'] }],
-    });
-    if (!selected) return;
-
-    const paths = Array.isArray(selected) ? selected : [selected];
-    if (paths.length === 0) return;
-
+  const importFiles = async (entries: { name: string; read: () => Promise<string> }[]) => {
+    if (entries.length === 0) return;
     setIsImporting(true);
     const failed: ImportFileError[] = [];
     let successCount = 0;
+    let lastTitle = 'Bộ đề mới';
 
     try {
-      for (const filePath of paths) {
-        const fileName = getFileName(filePath);
+      for (const entry of entries) {
+        const fileName = getFileName(entry.name);
         try {
-          const raw = await readTextFile(filePath);
-          const isJson = filePath.toLowerCase().endsWith('.json');
+          const raw = await entry.read();
+          const isJson = isJsonContent(fileName, raw);
           const res = isJson ? parseJson(raw) : parseText(raw);
           if (!res.ok) {
             failed.push({ fileName, errors: res.errors });
             continue;
           }
-          const title = extractTitle(filePath);
+          const title = res.title?.trim() || extractTitle(fileName);
+          lastTitle = title;
           await createExam.mutateAsync(toExamInput({ title, questions: res.value }));
           successCount++;
         } catch (err) {
@@ -73,9 +101,9 @@ export function useExamIO(subjectId: Id) {
 
       if (successCount > 0) {
         toast.success(
-          paths.length === 1
-            ? `Đã nhập bộ đề "${extractTitle(paths[0])}"`
-            : `Đã nhập ${successCount}/${paths.length} bộ đề`,
+          entries.length === 1
+            ? `Đã nhập bộ đề "${lastTitle}"`
+            : `Đã nhập ${successCount}/${entries.length} bộ đề`,
         );
       }
       if (failed.length > 0) {
@@ -86,13 +114,40 @@ export function useExamIO(subjectId: Id) {
     }
   };
 
+  const importExam = async () => {
+    try {
+      const selected = await open({
+        multiple: true,
+        filters: [{ name: 'Đề', extensions: ['txt', 'json'] }],
+      });
+      if (!selected) return;
+
+      const paths = Array.isArray(selected) ? selected : [selected];
+      await importFiles(
+        paths.map((filePath) => ({
+          name: filePath,
+          read: () => readTextFile(filePath),
+        })),
+      );
+    } catch {
+      // Fallback for non-Tauri mobile/browser preview
+      const files = await pickFilesFallback();
+      await importFiles(
+        files.map((f) => ({
+          name: f.name,
+          read: async () => f.raw,
+        })),
+      );
+    }
+  };
+
   const exportExam = async (examId: Id, title: string, format: 'txt' | 'json' = 'txt') => {
     const questions = await qc.query({
       queryKey: examKeys.questions(examId),
       queryFn: () => questionService.listAll(examId),
     });
     const path = await save({
-      defaultPath: `${title}.${format}`,
+      defaultPath: `${examId}.${format}`,
       filters: [
         format === 'json'
           ? { name: 'JSON', extensions: ['json'] }
@@ -100,7 +155,7 @@ export function useExamIO(subjectId: Id) {
       ],
     });
     if (!path) return;
-    const content = format === 'json' ? toJson(questions) : toText(questions);
+    const content = format === 'json' ? toJson(questions, title) : toText(questions, title);
     await writeTextFile(path, content);
     toast.success(`Đã xuất file ${format.toUpperCase()}`);
   };

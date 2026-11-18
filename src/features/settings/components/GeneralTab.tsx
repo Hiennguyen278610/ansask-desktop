@@ -32,7 +32,7 @@ export function GeneralTab() {
                 type="button"
                 onClick={() => setTheme(opt.value)}
                 className={cn(
-                  'flex items-center justify-center gap-2 rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors cursor-pointer',
+                  'flex items-center justify-center gap-1.5 rounded-[var(--radius-md)] px-2 py-2 text-xs font-medium transition-colors cursor-pointer sm:gap-2 sm:px-3 sm:text-sm',
                   active
                     ? 'bg-[var(--primary-soft)] text-[var(--primary-text)]'
                     : 'bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-hover)]',
@@ -58,7 +58,7 @@ export function GeneralTab() {
                 type="button"
                 onClick={() => setFontScale(opt.value)}
                 className={cn(
-                  'rounded-[var(--radius-md)] px-3 py-2 text-sm font-medium transition-colors cursor-pointer',
+                  'rounded-[var(--radius-md)] px-2 py-2 text-xs font-medium transition-colors cursor-pointer sm:px-3 sm:text-sm',
                   active
                     ? 'bg-[var(--primary-soft)] text-[var(--primary-text)]'
                     : 'bg-[var(--surface)] text-[var(--text)] hover:bg-[var(--surface-hover)]',
